@@ -25,7 +25,23 @@ export const createPost = async (req, res) => {
     res.status(409).json({ message: err.message });
   }
 };
-
+export const deletePost=async (req,res)=>{
+  // const {userId}=req.body;
+  const {id}=req.params;
+  const post =await Post.findByIdAndDelete(id);
+  if(post){
+    // await Post.delete(post);
+    res.send({
+      success:true,
+      message:'post deleted successsfully'
+    })
+  }else{
+    res.send({
+      success:false,
+      message:'error in deleting post'
+    })
+  }
+}
 /* READ */
 export const getFeedPosts = async (req, res) => {
   try {
@@ -35,7 +51,6 @@ export const getFeedPosts = async (req, res) => {
     res.status(404).json({ message: err.message });
   }
 };
-
 export const getUserPosts = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -53,19 +68,16 @@ export const likePost = async (req, res) => {
     const { userId } = req.body;
     const post = await Post.findById(id);
     const isLiked = post.likes.get(userId);
-
     if (isLiked) {
       post.likes.delete(userId);
     } else {
       post.likes.set(userId, true);
     }
-
     const updatedPost = await Post.findByIdAndUpdate(
       id,
       { likes: post.likes },
       { new: true }
     );
-
     res.status(200).json(updatedPost);
   } catch (err) {
     res.status(404).json({ message: err.message });

@@ -13,7 +13,7 @@ const FriendListWidget = ({ userId }) => {
 
   const getFriends = async () => {
     const response = await fetch(
-      ` http://localhost:7000/users/${userId}/friends`,
+      `https://tasveer-i2l5.onrender.com/${userId}/friends`,
       {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },

@@ -24,6 +24,7 @@ import WidgetWrapper from "components/WidgetWrapper";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPosts } from "state";
+import axios from "axios";
 
 const MyPostWidget = ({ picturePath }) => {
   const dispatch = useDispatch();
@@ -38,25 +39,35 @@ const MyPostWidget = ({ picturePath }) => {
   const medium = palette.neutral.medium;
 
   const handlePost = async () => {
-    const formData = new FormData();
-    formData.append("userId", _id);
-    formData.append("description", post);
-    if (image) {
-      formData.append("picture", image);
-      formData.append("picturePath", image.name);
+    try {
+      const formData = new FormData();
+      formData.append("userId", _id);
+      formData.append("description", post);
+      if (image) {
+        formData.append("picture", image);
+        formData.append("picturePath", image.name);
+      }
+      // const formData={
+      //   userId:_id,
+      //   description:post,
+      //   picture:image?image:null,
+      //   picturePath:image?image.name:null
+      // }
+      console.log('formdata in frontend is ',formData);
+      const response = await axios.post("http://localhost:7000/posts/createPost", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      dispatch(setPosts({ posts: response.data })); // Axios auto-parses response JSON
+      setImage(null);
+      setPost("");
+    } catch (error) {
+      console.error("Error creating post:", error.response?.data || error.message);
     }
-
-    const response = await fetch(` https://tasveer-i2l5.onrender.com/posts`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    });
-    const posts = await response.json();
-    dispatch(setPosts({ posts }));
-    setImage(null);
-    setPost("");
   };
-
+  
   return (
     <WidgetWrapper>
       <FlexBetween gap="1.5rem">

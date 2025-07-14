@@ -11,7 +11,8 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
   const navigate = useNavigate();
   const { _id } = useSelector((state) => state.user);
   const token = useSelector((state) => state.token);
-  const friends = useSelector((state) => state.user.friends); 
+  const friends = useSelector((state) => state.user?.friends ?? []);
+
 
   const { palette } = useTheme();
   const primaryLight = palette.primary.light;
@@ -21,20 +22,25 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
 
   const isFriend = friends.find((friend) => friend._id === friendId);
 
-  const patchFriend = async () => {
-    const response = await fetch(
-      `https://tasveer-i2l5.onrender.com/users/${_id}/${friendId}`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    const data = await response.json();
-    dispatch(setFriends({ friends: data }));
-  };
+ const patchFriend = async () => {
+  if (_id === friendId) return; // avoid making request to self
+
+  const response = await fetch(
+    `http://localhost:7000/users/${_id}/${friendId}`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  const data = await response.json();
+  dispatch(setFriends({ friends: data }));
+};
+console.log("Logged-in user ID (_id):", _id);
+console.log("Friend card user ID (friendId):", friendId);
+
 
   return (
     <FlexBetween>
@@ -64,16 +70,20 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
           </Typography>
         </Box>
       </FlexBetween>
-      <IconButton
-        onClick={() => patchFriend()}
-        sx={{ backgroundColor: primaryLight, p: "0.6rem" }}
-      >
-        {isFriend ? (
-          <PersonRemoveOutlined sx={{ color: primaryDark }} />
-        ) : (
-          <PersonAddOutlined sx={{ color: primaryDark }} />
-        )}
-      </IconButton>
+      {friendId && _id !== friendId && (
+  <IconButton
+    onClick={patchFriend}
+    sx={{ backgroundColor: primaryLight, p: "0.6rem" }}
+  >
+    {isFriend ? (
+      <PersonRemoveOutlined sx={{ color: primaryDark }} />
+    ) : (
+      <PersonAddOutlined sx={{ color: primaryDark }} />
+    )}
+  </IconButton>
+)}
+
+
     </FlexBetween>
   );
 };

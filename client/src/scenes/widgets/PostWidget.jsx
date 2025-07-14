@@ -35,7 +35,7 @@ const PostWidget = ({
   const primary = palette.primary.main;
 
   const patchLike = async () => {
-    const response = await fetch(`https://tasveer-i2l5.onrender.com/posts/${postId}/like`, {
+    const response = await fetch(`http://localhost:7000/posts/${postId}/like`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -46,6 +46,25 @@ const PostWidget = ({
     const updatedPost = await response.json();
     dispatch(setPost({ post: updatedPost }));
   };
+  const handleDeletePost = async () => {
+  try {
+    const response = await fetch(`http://localhost:7000/posts/${postId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      dispatch({ type: "posts/deletePost", payload: postId });
+    } else {
+      console.error("Failed to delete post");
+    }
+  } catch (error) {
+    console.error("Error deleting post:", error);
+  }
+};
+
 
   return (
     <WidgetWrapper m="2rem 0">
@@ -64,34 +83,45 @@ const PostWidget = ({
           height="auto"
           alt="post"
           style={{ borderRadius: "0.75rem", marginTop: "0.75rem" }}
-          src={`https://tasveer-i2l5.onrender.com/assets/${picturePath}`}
+          src={`http://localhost:7000/assets/${picturePath}`}
         />
       )}
-      <FlexBetween mt="0.25rem">
-        <FlexBetween gap="1rem">
-          <FlexBetween gap="0.3rem">
-            <IconButton onClick={patchLike}>
-              {isLiked ? (
-                <FavoriteOutlined sx={{ color: primary }} />
-              ) : (
-                <FavoriteBorderOutlined />
-              )}
-            </IconButton>
-            <Typography>{likeCount}</Typography>
-          </FlexBetween>
+     <FlexBetween mt="0.25rem">
+  <FlexBetween gap="1rem">
+    <FlexBetween gap="0.3rem">
+      <IconButton onClick={patchLike}>
+        {isLiked ? (
+          <FavoriteOutlined sx={{ color: primary }} />
+        ) : (
+          <FavoriteBorderOutlined />
+        )}
+      </IconButton>
+      <Typography>{likeCount}</Typography>
+    </FlexBetween>
 
-          <FlexBetween gap="0.3rem">
-            <IconButton onClick={() => setIsComments(!isComments)}>
-              <ChatBubbleOutlineOutlined />
-            </IconButton>
-            <Typography>{comments.length}</Typography>
-          </FlexBetween>
-        </FlexBetween>
+    <FlexBetween gap="0.3rem">
+      <IconButton onClick={() => setIsComments(!isComments)}>
+        <ChatBubbleOutlineOutlined />
+      </IconButton>
+      <Typography>{comments.length}</Typography>
+    </FlexBetween>
+  </FlexBetween>
 
-        <IconButton>
-          <ShareOutlined />
-        </IconButton>
-      </FlexBetween>
+  <FlexBetween gap="0.5rem">
+    <IconButton>
+      <ShareOutlined />
+    </IconButton>
+
+    {loggedInUserId === postUserId && (
+      <IconButton onClick={handleDeletePost}>
+        <Typography color="error" fontSize="0.9rem">
+          Delete
+        </Typography>
+      </IconButton>
+    )}
+  </FlexBetween>
+</FlexBetween>
+
       {isComments && (
         <Box mt="0.5rem">
           {comments.map((comment, i) => (

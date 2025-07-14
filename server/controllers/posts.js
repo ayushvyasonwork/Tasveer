@@ -5,7 +5,9 @@ import User from "../models/User.js";
 export const createPost = async (req, res) => {
   try {
     const { userId, description, picturePath } = req.body;
-    const user = await User.findById(userId);
+    console.log('req body in backend is ',req.body);
+    const user = await User.findOne({_id:userId});
+    console.log('user in backend is ',user);
     const newPost = new Post({
       userId,
       firstName: user.firstName,
@@ -21,7 +23,7 @@ export const createPost = async (req, res) => {
 
     const post = await Post.find();
     res.status(201).json(post);
-  } catch (err) {
+  } catch (err) {   
     res.status(409).json({ message: err.message });
   }
 };

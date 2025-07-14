@@ -7,25 +7,22 @@ import FriendListWidget from "scenes/widgets/FriendListWidget";
 import MyPostWidget from "scenes/widgets/MyPostWidget";
 import PostsWidget from "scenes/widgets/PostsWidget";
 import UserWidget from "scenes/widgets/UserWidget";
+import api from "../../axiosInstance";
+import { use } from "react";
 
 const ProfilePage = () => {
-  const [user, setUser] = useState(null);
+  // const [user, setUser] = useState(null);
   const { userId } = useParams();
   const token = useSelector((state) => state.token);
   const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
+  const user=useSelector((state) => state.user);
+  console.log('user in profile page is ', user);
+  
 
-  const getUser = async () => {
-    const response = await fetch(` https://tasveer-i2l5.onrender.com/users/${userId}`, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await response.json();
-    setUser(data);
-  };
 
-  useEffect(() => {
-    getUser();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // useEffect(() => {
+  //   getUser();
+  // }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!user) return null;
 

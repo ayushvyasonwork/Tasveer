@@ -3,10 +3,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { setPosts } from "state";
 import PostWidget from "./PostWidget";
 
-const PostsWidget = ({ postUserId, isProfile = false }) => {
+const PostsWidget = ({ userId, isProfile = false }) => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user);
-  const userId=user?._id;
   console.log('user in posts widget is ', user);
   const posts = useSelector((state) => state.posts);
   const token = useSelector((state) => state.token);
@@ -40,13 +39,13 @@ const PostsWidget = ({ postUserId, isProfile = false }) => {
       getPosts();
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
+  console.log('posts in posts widget is ', posts);
   return (
     <>
       {posts.map(
         ({
           _id,
-          postUserId,
+          userId:postuserId,
           firstName,
           lastName,
           description,
@@ -60,7 +59,7 @@ const PostsWidget = ({ postUserId, isProfile = false }) => {
             key={_id}
             postId={_id}
            
-            postUserId={postUserId}
+            postUserId={postuserId}
             name={`${firstName} ${lastName}`}
             description={description}
             location={location}

@@ -10,11 +10,11 @@ export const createPost = async (req, res) => {
     console.log('user in backend is ',user);
     const newPost = new Post({
       userId,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      location: user.location,
+      firstName: user?.firstName,
+      lastName: user?.lastName,
+      location: user?.location,
       description,
-      userPicturePath: user.picturePath,
+      userPicturePath: user?.picturePath,
       picturePath,
       likes: {},
       comments: [],
@@ -85,3 +85,47 @@ export const likePost = async (req, res) => {
     res.status(404).json({ message: err.message });
   }
 };
+export const addComment = async (req, res) => {
+  try {
+    const { id: postId } = req.params;
+    const { userId, text } = req.body;
+
+    if (!text?.trim()) {
+      return res.status(400).json({ message: "Comment text is required." });
+    }
+
+    const post = await Post.findById(postId);
+    if (!post) return res.status(404).json({ message: "Post not found." });
+
+    post.comments.push({ userId, text });
+    await post.save();
+
+    const updatedPost = await Post.findById(postId).populate({
+      path: "comments.userId",
+      select: "firstName lastName picturePath",
+    });
+
+    res.status(200).json(updatedPost);
+  } catch (err) {
+    console.error("Error adding comment:", err);
+    res.status(500).json({ message: "Failed to add comment." });
+  }
+};
+export const getComments = async (req, res) => {
+  try {
+    const { id: postId } = req.params;
+
+    const post = await Post.findById(postId).populate({
+      path: "comments.userId",
+      select: "firstName lastName picturePath",
+    });
+
+    if (!post) return res.status(404).json({ message: "Post not found." });
+
+    res.status(200).json(post.comments);
+  } catch (err) {
+    console.error("Error getting comments:", err);
+    res.status(500).json({ message: "Failed to fetch comments." });
+  }
+};
+

@@ -4,7 +4,7 @@ import {
   FavoriteOutlined,
   ShareOutlined,
 } from "@mui/icons-material";
-import { Box, Divider, IconButton, Typography, useTheme } from "@mui/material";
+import { Box, Divider, IconButton, Typography, useTheme , TextField, Button } from "@mui/material";
 import FlexBetween from "components/FlexBetween";
 import Friend from "components/Friend";
 import WidgetWrapper from "components/WidgetWrapper";
@@ -24,6 +24,8 @@ const PostWidget = ({
   comments,
 }) => {
   const [isComments, setIsComments] = useState(false);
+  const [newComment, setNewComment] = useState("");
+
   const dispatch = useDispatch();
   const token = useSelector((state) => state.token);
   const loggedInUserId = useSelector((state) => state.user._id);
@@ -46,6 +48,28 @@ const PostWidget = ({
     const updatedPost = await response.json();
     dispatch(setPost({ post: updatedPost }));
   };
+  const handleAddComment = async () => {
+  if (!newComment.trim()) return;
+
+  try {
+    const response = await fetch(`http://localhost:7000/posts/${postId}/comment`, {
+      method: "POST", // or POST if your backend expects that
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text: newComment, userId: loggedInUserId }),
+
+    });
+
+    const updatedPost = await response.json();
+    dispatch(setPost({ post: updatedPost }));
+    setNewComment(""); // Clear the input
+  } catch (error) {
+    console.error("Failed to add comment:", error);
+  }
+};
+
   const handleDeletePost = async () => {
   try {
     const response = await fetch(`http://localhost:7000/posts/${postId}`, {
@@ -65,7 +89,7 @@ const PostWidget = ({
   }
 };
 
-
+console.log("post userId is ", postUserId);
   return (
     <WidgetWrapper m="2rem 0">
       <Friend
@@ -100,9 +124,13 @@ const PostWidget = ({
     </FlexBetween>
 
     <FlexBetween gap="0.3rem">
-      <IconButton onClick={() => setIsComments(!isComments)}>
-        <ChatBubbleOutlineOutlined />
-      </IconButton>
+      <IconButton onClick={() => {
+  setIsComments(!isComments);
+  console.log("Toggle comments:", !isComments);
+}}>
+  <ChatBubbleOutlineOutlined />
+</IconButton>
+
       <Typography>{comments.length}</Typography>
     </FlexBetween>
   </FlexBetween>
@@ -123,18 +151,53 @@ const PostWidget = ({
 </FlexBetween>
 
       {isComments && (
-        <Box mt="0.5rem">
-          {comments.map((comment, i) => (
-            <Box key={`${name}-${i}`}>
-              <Divider />
-              <Typography sx={{ color: main, m: "0.5rem 0", pl: "1rem" }}>
-                {comment}
-              </Typography>
-            </Box>
-          ))}
-          <Divider />
-        </Box>
-      )}
+  <Box mt="0.5rem">
+    {Array.isArray(comments) && comments.map((comment, i) => (
+      <Box key={`${name}-${i}`}>
+        <Divider />
+        <FlexBetween key={i} gap="0.75rem" sx={{ m: "0.5rem 0", pl: "1rem" }}>
+  <img
+    src={`http://localhost:7000/assets/${comment.userId.picturePath}`}
+    alt="user"
+    width="30"
+    height="30"
+    style={{ borderRadius: "50%" }}
+  />
+  <Box>
+    <Typography fontWeight="500" color={main}>
+      {comment.userId.firstName} {comment.userId.lastName}
+    </Typography>
+    <Typography color={main}>{comment.text}</Typography>
+  </Box>
+</FlexBetween>
+
+      </Box>
+    ))}
+    <Divider />
+
+    {/* Comment input field */}
+    <Box mt="0.75rem" display="flex" gap="1rem" alignItems="center">
+      <TextField
+        fullWidth
+        size="small"
+        placeholder="Write a comment..."
+        variant="outlined"
+        value={newComment}
+        onChange={(e) => setNewComment(e.target.value)}
+      />
+      <Button
+        variant="contained"
+        onClick={handleAddComment}
+        disabled={!newComment.trim()}
+        sx={{ textTransform: "none" }}
+      >
+        Post
+      </Button>
+    </Box>
+  </Box>
+)}
+
+
     </WidgetWrapper>
   );
 };

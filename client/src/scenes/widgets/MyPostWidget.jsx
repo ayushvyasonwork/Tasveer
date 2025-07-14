@@ -39,34 +39,30 @@ const MyPostWidget = ({ picturePath }) => {
   const medium = palette.neutral.medium;
 
   const handlePost = async () => {
-    try {
-      const formData = new FormData();
-      formData.append("userId", _id);
-      formData.append("description", post);
-      if (image) {
-        formData.append("picture", image);
-        formData.append("picturePath", image.name);
-      }
-      // const formData={
-      //   userId:_id,
-      //   description:post,
-      //   picture:image?image:null,
-      //   picturePath:image?image.name:null
-      // }
-      console.log('formdata in frontend is ',formData);
-      const response = await axios.post("http://localhost:7000/posts/createPost", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-  
-      dispatch(setPosts({ posts: response.data })); // Axios auto-parses response JSON
-      setImage(null);
-      setPost("");
-    } catch (error) {
-      console.error("Error creating post:", error.response?.data || error.message);
+  try {
+    const formData = new FormData();
+    formData.append("userId", _id);
+    formData.append("description", post);
+    if (image) {
+      formData.append("picture", image);
+      formData.append("picturePath", image.name);
     }
-  };
+
+    const response = await axios.post("http://localhost:7000/posts", formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    dispatch(setPosts({ posts: response.data }));
+    setImage(null);
+    setPost("");
+  } catch (error) {
+    console.error("Error creating post:", error.response?.data || error.message);
+  }
+};
+
   
   return (
     <WidgetWrapper>

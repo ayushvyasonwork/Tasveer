@@ -68,3 +68,24 @@ export const addRemoveFriend = async (req, res) => {
     res.status(404).json({ message: err.message });
   }
 };
+export const updateSocialLinks = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { twitter, linkedin } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      {
+        twitter,
+        linkedin,
+      },
+      { new: true } // return updated document
+    );
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

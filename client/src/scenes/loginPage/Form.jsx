@@ -24,6 +24,8 @@ const registerSchema = yup.object().shape({
   location: yup.string().required("required"),
   occupation: yup.string().required("required"),
   picture: yup.string().required("required"),
+  twitter: yup.string().url("Invalid Twitter URL").nullable(),
+  linkedin: yup.string().url("Invalid LinkedIn URL").nullable(),
 });
 
 const loginSchema = yup.object().shape({
@@ -39,6 +41,8 @@ const initialValuesRegister = {
   location: "",
   occupation: "",
   picture: "",
+  twitter: "",
+  linkedin: "",
 };
 
 const initialValuesLogin = {
@@ -173,6 +177,25 @@ const Form = () => {
                   helperText={touched.occupation && errors.occupation}
                   sx={{ gridColumn: "span 4" }}
                 />
+                <TextField
+  label="Twitter Profile Link"
+  onBlur={handleBlur}
+  onChange={handleChange}
+  value={values.twitter}
+  name="twitter"
+  sx={{ gridColumn: "span 4" }}
+/>
+
+<TextField
+  label="LinkedIn Profile Link"
+  onBlur={handleBlur}
+  onChange={handleChange}
+  value={values.linkedin}
+  name="linkedin"
+  sx={{ gridColumn: "span 4" }}
+/>
+
+
                 <Box
                   gridColumn="span 4"
                   border={`1px solid ${palette.neutral.medium}`}

@@ -3,8 +3,16 @@ import {
   EditOutlined,
   LocationOnOutlined,
   WorkOutlineOutlined,
+  SaveOutlined,
 } from "@mui/icons-material";
-import { Box, Typography, Divider, useTheme } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Divider,
+  useTheme,
+  IconButton,
+  TextField,
+} from "@mui/material";
 import UserImage from "components/UserImage";
 import FlexBetween from "components/FlexBetween";
 import WidgetWrapper from "components/WidgetWrapper";
@@ -14,6 +22,9 @@ import { useNavigate } from "react-router-dom";
 
 const UserWidget = ({ userId, picturePath }) => {
   const [user, setUser] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+  const [twitter, setTwitter] = useState("");
+  const [linkedin, setLinkedin] = useState("");
   const { palette } = useTheme();
   const navigate = useNavigate();
   const token = useSelector((state) => state.token);
@@ -27,17 +38,31 @@ const UserWidget = ({ userId, picturePath }) => {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await response.json();
-    console.log('data in user widget is ', data);
     setUser(data);
+    setTwitter(data.twitter || "");
+    setLinkedin(data.linkedin || "");
+  };
+
+  const saveSocialLinks = async () => {
+    const response = await fetch(`http://localhost:7000/users/${userId}`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ twitter, linkedin }),
+    });
+
+    const updatedUser = await response.json();
+    setUser(updatedUser);
+    setEditMode(false);
   };
 
   useEffect(() => {
     getUser();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   const {
     firstName,
@@ -113,12 +138,13 @@ const UserWidget = ({ userId, picturePath }) => {
 
       <Divider />
 
-      {/* FOURTH ROW */}
+      {/* FOURTH ROW - SOCIAL LINKS */}
       <Box p="1rem 0">
         <Typography fontSize="1rem" color={main} fontWeight="500" mb="1rem">
           Social Profiles
         </Typography>
 
+        {/* Twitter */}
         <FlexBetween gap="1rem" mb="0.5rem">
           <FlexBetween gap="1rem">
             <img src="../assets/twitter.png" alt="twitter" />
@@ -126,23 +152,74 @@ const UserWidget = ({ userId, picturePath }) => {
               <Typography color={main} fontWeight="500">
                 Twitter
               </Typography>
-              <Typography color={medium}>Social Network</Typography>
+              {editMode ? (
+                <TextField
+                  variant="standard"
+                  value={twitter}
+                  onChange={(e) => setTwitter(e.target.value)}
+                  placeholder="Twitter Profile Link"
+                />
+              ) : (
+                <Typography
+                  color={medium}
+                  sx={{ cursor: twitter ? "pointer" : "default" }}
+                  onClick={() =>
+                    twitter && window.open(twitter, "_blank", "noopener")
+                  }
+                >
+                  {twitter ? "Visit Profile" : "Not set"}
+                </Typography>
+              )}
             </Box>
           </FlexBetween>
-          <EditOutlined sx={{ color: main }} />
+          {editMode ? (
+            <IconButton onClick={saveSocialLinks}>
+              <SaveOutlined sx={{ color: main }} />
+            </IconButton>
+          ) : (
+            <IconButton onClick={() => setEditMode(true)}>
+              <EditOutlined sx={{ color: main }} />
+            </IconButton>
+          )}
         </FlexBetween>
 
+        {/* LinkedIn */}
         <FlexBetween gap="1rem">
           <FlexBetween gap="1rem">
             <img src="../assets/linkedin.png" alt="linkedin" />
             <Box>
               <Typography color={main} fontWeight="500">
-                Linkedin
+                LinkedIn
               </Typography>
-              <Typography color={medium}>Network Platform</Typography>
+              {editMode ? (
+                <TextField
+                  variant="standard"
+                  value={linkedin}
+                  onChange={(e) => setLinkedin(e.target.value)}
+                  placeholder="LinkedIn Profile Link"
+                />
+              ) : (
+                <Typography
+                  color={medium}
+                  sx={{ cursor: linkedin ? "pointer" : "default" }}
+                  onClick={() =>
+                    linkedin && window.open(linkedin, "_blank", "noopener")
+                  }
+                >
+                  {linkedin ? "Visit Profile" : "Not set"}
+                </Typography>
+              )}
             </Box>
           </FlexBetween>
-          <EditOutlined sx={{ color: main }} />
+          {editMode ? (
+            <IconButton onClick={saveSocialLinks}>
+              <SaveOutlined sx={{ color: main }} />
+            </IconButton>
+          ) : (
+            <IconButton onClick={() => setEditMode(true)}>
+              <EditOutlined sx={{ color: main }} />
+            </IconButton>
+          )}
         </FlexBetween>
       </Box>
     </WidgetWrapper>

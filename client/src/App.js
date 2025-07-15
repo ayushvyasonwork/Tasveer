@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import HomePage from "scenes/homePage";
 import LoginPage from "scenes/loginPage";
 import ProfilePage from "scenes/profilePage";
+import StoriesPage from "scenes/stories";
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { CssBaseline, ThemeProvider } from "@mui/material";
@@ -9,6 +10,7 @@ import { createTheme } from "@mui/material/styles";
 import { themeSettings } from "./theme";
 import Game from "components/Game";
 import GameWithNavigate from "components/GameWithNavigate";
+import Navbar from "scenes/navbar";
 
 function App() {
   const mode = useSelector((state) => state.mode);
@@ -33,6 +35,10 @@ function App() {
             <Route
               path="/profile/:userId"
               element={isAuth ? <ProfilePage /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/stories"
+              element={isAuth ? < StoriesPage/> : <Navigate to="/" />}
             />
           </Routes>
         </ThemeProvider>

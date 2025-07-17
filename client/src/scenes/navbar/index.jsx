@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Box,
   IconButton,
@@ -44,42 +44,128 @@ const Navbar = () => {
   const fullName = `${user.firstName} ${user.lastName}`;
 
   return (
-    <FlexBetween padding="1rem 6%" backgroundColor={alt}>
-      <FlexBetween gap="1.75rem">
-        <Typography
-          fontWeight="bold"
-          fontSize="clamp(1rem, 2rem, 2.25rem)"
-          color="primary"
-          onClick={() => navigate("/home")}
-          sx={{ "&:hover": { color: primaryLight, cursor: "pointer" } }}
-        >
-          Tasveer
-        </Typography>
-        {isNonMobileScreens && (
-          <FlexBetween backgroundColor={neutralLight} borderRadius="9px" gap="3rem" padding="0.1rem 1.5rem">
-            <InputBase placeholder="Search..." />
-            <IconButton><Search /></IconButton>
+    <>
+      <FlexBetween padding="1rem 6%" backgroundColor={alt}>
+        {/* LEFT SIDE */}
+        <FlexBetween gap="1.75rem">
+          <Typography
+            fontWeight="bold"
+            fontSize="clamp(1rem, 2rem, 2.25rem)"
+            color="primary"
+            onClick={() => navigate("/home")}
+            sx={{ "&:hover": { color: primaryLight, cursor: "pointer" } }}
+          >
+            Tasveer
+          </Typography>
+          {isNonMobileScreens && (
+            <FlexBetween
+              backgroundColor={neutralLight}
+              borderRadius="9px"
+              gap="3rem"
+              padding="0.1rem 1.5rem"
+            >
+              <InputBase placeholder="Search..." />
+              <IconButton><Search /></IconButton>
+            </FlexBetween>
+          )}
+        </FlexBetween>
+
+        {/* RIGHT SIDE */}
+        {isNonMobileScreens ? (
+          <FlexBetween gap="2rem">
+            <IconButton onClick={() => dispatch(setMode())}>
+              {theme.palette.mode === "dark" ? (
+                <DarkMode sx={{ fontSize: "25px", cursor: "pointer" }} />
+              ) : (
+                <LightMode sx={{ fontSize: "25px", color: dark, cursor: "pointer" }} />
+              )}
+            </IconButton>
+
+            
+              <VideogameAssetIcon sx={{ fontSize: "25px", cursor: "pointer" }} 
+              onClick={() => navigate('/game')}/>
+            
+
+            
+              <ScheduleIcon sx={{ fontSize: "25px", cursor: "pointer" }} 
+              onClick={() => navigate('/stories')}/>
+          
+
+            <Message sx={{ fontSize: "25px", cursor: "pointer" }} />
+            <Notifications sx={{ fontSize: "25px", cursor: "pointer" }} />
+            <Help sx={{ fontSize: "25px", cursor: "pointer" }} />
+
+            <FormControl variant="standard" value={fullName}>
+              <Select
+                value={fullName}
+                sx={{
+                  backgroundColor: neutralLight,
+                  width: "150px",
+                  borderRadius: "0.25rem",
+                  p: "0.25rem 1rem",
+                  "& .MuiSvgIcon-root": { pr: "0.25rem", width: "3rem" },
+                  "& .MuiSelect-select:focus": { backgroundColor: neutralLight },
+                }}
+                input={<InputBase />}
+              >
+                <MenuItem value={fullName}><Typography>{fullName}</Typography></MenuItem>
+                <MenuItem onClick={() => dispatch(setLogout())}>Log Out</MenuItem>
+              </Select>
+            </FormControl>
           </FlexBetween>
+        ) : (
+          <IconButton onClick={() => setIsMobileMenuToggled(!isMobileMenuToggled)}>
+            <Menu />
+          </IconButton>
         )}
       </FlexBetween>
 
-      {/* DESKTOP NAV */}
-      {isNonMobileScreens ? (
-        <FlexBetween gap="2rem">
-          <IconButton onClick={() => dispatch(setMode())}>
-            {theme.palette.mode === "dark" ? <DarkMode sx={{ fontSize: "25px" }} /> : <LightMode sx={{ color: dark, fontSize: "25px" }} />}
-          </IconButton>
-          <VideogameAssetIcon 
-          sx={{ fontSize: "25px" }}
-          onClick={() => navigate('/game')}
-          />
-          <ScheduleIcon 
-          onClick={() => navigate('/stories')}
-          />
+      {/* MOBILE MENU DRAWER */}
+      {!isNonMobileScreens && isMobileMenuToggled && (
+        <Box
+          position="fixed"
+          top="0"
+          right="0"
+          height="100vh"
+          width="250px"
+          backgroundColor={background}
+          zIndex={1000}
+          boxShadow="-2px 0 10px rgba(0,0,0,0.3)"
+          p="2rem 1rem"
+          display="flex"
+          flexDirection="column"
+          gap="2rem"
+        >
           
-          <Message sx={{ fontSize: "25px" }} />
-          <Notifications sx={{ fontSize: "25px" }} />
-          <Help sx={{ fontSize: "25px" }} />
+            <Close 
+            onClick={() => setIsMobileMenuToggled(false)}
+            sx={{ alignSelf: "flex-end" }}/>
+          
+
+          
+            {theme.palette.mode === "dark" ? (
+              <DarkMode sx={{ fontSize: "25px", cursor: "pointer" }} 
+              onClick={() => dispatch(setMode())}/>
+            ) : (
+              <LightMode sx={{ fontSize: "25px", color: dark, cursor: "pointer" }} 
+              onClick={() => dispatch(setMode())}/>
+            )}
+          
+
+          
+            <VideogameAssetIcon sx={{ fontSize: "25px", cursor: "pointer" }} 
+            onClick={() => { navigate("/game"); setIsMobileMenuToggled(false); }}/>
+         
+
+          
+            <ScheduleIcon sx={{ fontSize: "25px", cursor: "pointer" }} 
+            onClick={() => { navigate("/stories"); setIsMobileMenuToggled(false); }}/>
+          
+
+          <Message sx={{ fontSize: "25px", cursor: "pointer" }} />
+          <Notifications sx={{ fontSize: "25px", cursor: "pointer" }} />
+          <Help sx={{ fontSize: "25px", cursor: "pointer" }} />
+
           <FormControl variant="standard" value={fullName}>
             <Select
               value={fullName}
@@ -97,11 +183,9 @@ const Navbar = () => {
               <MenuItem onClick={() => dispatch(setLogout())}>Log Out</MenuItem>
             </Select>
           </FormControl>
-        </FlexBetween>
-      ) : (
-        <IconButton onClick={() => setIsMobileMenuToggled(!isMobileMenuToggled)}><Menu /></IconButton>
+        </Box>
       )}
-    </FlexBetween>
+    </>
   );
 };
 

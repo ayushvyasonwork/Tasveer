@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { setFriends } from "state";
 import FlexBetween from "./FlexBetween";
 import UserImage from "./UserImage";
+import api from "../axiosInstance"; // Adjust the import path as necessary
 
 const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
   const dispatch = useDispatch();
@@ -22,21 +23,15 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
   const isFriend = friends.find((friend) => friend._id === friendId);
 
   const patchFriend = async () => {
-    if (_id === friendId) return; // avoid making request to self
+  if (_id === friendId) return; // avoid making request to self
 
-    const response = await fetch(
-      `http://localhost:7000/users/${_id}/${friendId}`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    const data = await response.json();
-    dispatch(setFriends({ friends: data }));
-  };
+  try {
+    const response = await api.patch(`/users/${_id}/${friendId}`);
+    dispatch(setFriends({ friends: response.data }));
+  } catch (error) {
+    console.error("Error updating friend status:", error);
+  }
+};
   console.log("Logged-in user ID (_id):", _id);
   console.log("Friend card user ID (friendId):", friendId);
 

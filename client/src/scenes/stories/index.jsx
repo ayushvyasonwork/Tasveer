@@ -1,13 +1,20 @@
 import { useState, useEffect } from "react";
-import { Box, Typography, Avatar, IconButton, Button } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Avatar,
+  IconButton,
+  Button,
+  CircularProgress,
+} from "@mui/material";
 import { useSelector } from "react-redux";
-import axios from "axios";
+import api from "../../axiosInstance";
 import io from "socket.io-client";
 import Dropzone from "react-dropzone";
 import CloseIcon from "@mui/icons-material/Close";
 import Navbar from "scenes/navbar";
 
-const socket = io("http://localhost:7000", {
+const socket = io(process.env.REACT_APP_API_BASE_URL, {
   transports: ["websocket"],
   withCredentials: true,
 });
@@ -15,29 +22,42 @@ const socket = io("http://localhost:7000", {
 const StoriesPage = () => {
   const [stories, setStories] = useState([]);
   const [image, setImage] = useState(null);
-  const [selectedStory, setSelectedStory] = useState(null); // ← Story to show full-screen
+  const [selectedStory, setSelectedStory] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const user = useSelector((state) => state.user);
-  const token = useSelector((state) => state.token);
 
   const fetchStories = async () => {
-    const res = await axios.get("http://localhost:7000/stories", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setStories(res.data);
+    try {
+      const res = await api.get("/stories");
+      setStories(res.data);
+    } catch (err) {
+      console.error("Error fetching stories:", err);
+    }
   };
 
   const uploadStory = async () => {
-    const formData = new FormData();
-    formData.append("userId", user._id);
-    formData.append("media", image);
-    formData.append("storyPath", image.name);
+    if (!image || !user?._id) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("userId", user._id);
+      formData.append("media", image);
+      formData.append("storyPath", image.name);
 
-    const res = await axios.post("http://localhost:7000/stories", formData, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+      const res = await api.post("/stories", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-    await fetchStories(); // refreshes the list with populated userId
-    setImage(null);
+      console.log("Story uploaded successfully:", res.data);
+      await fetchStories();
+      setImage(null);
+    } catch (error) {
+      console.error("Error uploading story:", error);
+    } finally {
+      setUploading(false);
+    }
   };
 
   useEffect(() => {
@@ -51,7 +71,8 @@ const StoriesPage = () => {
   return (
     <Box>
       <Navbar />
-      {/* Upload Story Section */}
+
+      {/* Upload Section */}
       <Box
         position="sticky"
         top="64px"
@@ -84,15 +105,15 @@ const StoriesPage = () => {
         </Dropzone>
         <Button
           onClick={uploadStory}
-          disabled={!image}
+          disabled={!image || uploading}
           variant="contained"
           sx={{ mt: "0.5rem" }}
         >
-          Upload Story
+          {uploading ? <CircularProgress size={24} color="inherit" /> : "Upload Story"}
         </Button>
       </Box>
 
-      {/* Story List */}
+      {/* Stories List */}
       <Box p="1rem">
         <Typography variant="h5" mb="1rem">
           User Stories
@@ -114,14 +135,17 @@ const StoriesPage = () => {
               onClick={() => setSelectedStory(story)}
             >
               <Avatar
-                src={`http://localhost:7000/assets/${story.userId.picturePath}`}
-                alt={story.userId.firstName}
+                src={`http://localhost:7000/assets/${story.userId?.picturePath}`}
+                alt={story.userId?.firstName}
               />
-              <Typography fontWeight="500">{story.userId.firstName}</Typography>
+              <Typography fontWeight="500">
+                {story.userId?.firstName || "Unknown"}
+              </Typography>
             </Box>
           ))}
         </Box>
       </Box>
+
       {/* Fullscreen Story View */}
       {selectedStory && (
         <Box
@@ -172,7 +196,7 @@ const StoriesPage = () => {
             />
           </Box>
           <Typography color="#fff" mt="1rem">
-            {selectedStory.userId.firstName}
+            {selectedStory.userId?.firstName || "Anonymous"}
           </Typography>
         </Box>
       )}

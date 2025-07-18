@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPosts } from "state";
 import PostWidget from "./PostWidget";
+import api from "./../../axiosInstance"; // Adjust the import path as necessary
 
 const PostsWidget = ({ userId, isProfile = false }) => {
   const dispatch = useDispatch();
@@ -11,26 +12,26 @@ const PostsWidget = ({ userId, isProfile = false }) => {
   const token = useSelector((state) => state.token);
 
   const getPosts = async () => {
-    const response = await fetch("http://localhost:7000/posts", {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await response.json();
-    console.log('data in posts is ',data);
+  try {
+    const response = await api.get("/posts");
+    const data = response.data; // ✅ axios stores data here
+    console.log("data in posts is", data);
     dispatch(setPosts({ posts: data }));
-  };
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+  }
+};
 
-  const getUserPosts = async () => {
-    const response = await fetch(
-      `http://localhost:7000/posts/${userId}/posts`,
-      {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    const data = await response.json();
+const getUserPosts = async () => {
+  try {
+    const response = await api.get(`/posts/${userId}/posts`);
+    const data = response.data; // ✅ axios stores data here
     dispatch(setPosts({ posts: data }));
-  };
+  } catch (error) {
+    console.error("Error fetching user posts:", error);
+  }
+};
+
 
   useEffect(() => {
     if (isProfile) {

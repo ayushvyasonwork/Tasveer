@@ -24,7 +24,7 @@ import WidgetWrapper from "components/WidgetWrapper";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPosts } from "state";
-import axios from "axios";
+import api from "../../axiosInstance"; // Adjust the import path as necessary
 
 const MyPostWidget = ({ picturePath }) => {
   const dispatch = useDispatch();
@@ -33,7 +33,6 @@ const MyPostWidget = ({ picturePath }) => {
   const [post, setPost] = useState("");
   const { palette } = useTheme();
   const { _id } = useSelector((state) => state.user);
-  const token = useSelector((state) => state.token);
   const isNonMobileScreens = useMediaQuery("(min-width: 1000px)");
   const mediumMain = palette.neutral.mediumMain;
   const medium = palette.neutral.medium;
@@ -48,12 +47,7 @@ const MyPostWidget = ({ picturePath }) => {
       formData.append("picturePath", image.name);
     }
 
-    const response = await axios.post("http://localhost:7000/posts", formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    const response = await api.post("/posts", formData);
 
     dispatch(setPosts({ posts: response.data }));
     setImage(null);

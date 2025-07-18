@@ -15,6 +15,7 @@ import { useDispatch } from "react-redux";
 import { setLogin } from "state";
 import Dropzone from "react-dropzone";
 import FlexBetween from "components/FlexBetween";
+import api from "axiosInstance";
 
 const registerSchema = yup.object().shape({
   firstName: yup.string().required("required"),
@@ -67,12 +68,8 @@ const Form = () => {
     }
     formData.append("picturePath", values.picture.name);
 
-    const savedUserResponse = await fetch(
-      " http://localhost:7000/auth/register",
-      {
-        method: "POST",
-        body: formData,
-      }
+   
+    const savedUserResponse = await api.post("/auth/register", formData
     );
     const savedUser = await savedUserResponse.json();
     onSubmitProps.resetForm();
@@ -82,14 +79,13 @@ const Form = () => {
     }
   };
 
-  const login = async (values, onSubmitProps) => {
-    const loggedInResponse = await fetch("http://localhost:7000/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
-    });
-    const loggedIn = await loggedInResponse.json();
+ const login = async (values, onSubmitProps) => {
+  try {
+    const response = await api.post("/auth/login", values);
+
+    const loggedIn = response.data;
     onSubmitProps.resetForm();
+
     if (loggedIn) {
       dispatch(
         setLogin({
@@ -99,7 +95,11 @@ const Form = () => {
       );
       navigate("/home");
     }
-  };
+  } catch (error) {
+    console.error("Login failed:", error?.response?.data || error.message);
+    // optionally show error to user
+  }
+};
 
   const handleFormSubmit = async (values, onSubmitProps) => {
     if (isLogin) await login(values, onSubmitProps);

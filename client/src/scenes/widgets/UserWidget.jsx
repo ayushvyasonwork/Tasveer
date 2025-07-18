@@ -19,6 +19,7 @@ import WidgetWrapper from "components/WidgetWrapper";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../../axiosInstance"; // Adjust the import path as necessary
 
 const UserWidget = ({ userId, picturePath }) => {
   const [user, setUser] = useState(null);
@@ -32,31 +33,32 @@ const UserWidget = ({ userId, picturePath }) => {
   const medium = palette.neutral.medium;
   const main = palette.neutral.main;
 
-  const getUser = async () => {
-    const response = await fetch(`http://localhost:7000/users/${userId}`, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await response.json();
+const getUser = async () => {
+  try {
+    const response = await api.get(`/users/${userId}`);
+    const data = response.data;
     setUser(data);
     setTwitter(data.twitter || "");
     setLinkedin(data.linkedin || "");
-  };
+  } catch (error) {
+    console.error("Error fetching user:", error);
+  }
+};
 
-  const saveSocialLinks = async () => {
-    const response = await fetch(`http://localhost:7000/users/${userId}`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ twitter, linkedin }),
+const saveSocialLinks = async () => {
+  try {
+    const response = await api.patch(`/users/${userId}`, {
+      twitter,
+      linkedin,
     });
-
-    const updatedUser = await response.json();
+    const updatedUser = response.data;
     setUser(updatedUser);
     setEditMode(false);
-  };
+  } catch (error) {
+    console.error("Error saving social links:", error);
+  }
+};
+
 
   useEffect(() => {
     getUser();

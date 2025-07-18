@@ -7,19 +7,13 @@ import FriendListWidget from "scenes/widgets/FriendListWidget";
 import MyPostWidget from "scenes/widgets/MyPostWidget";
 import PostsWidget from "scenes/widgets/PostsWidget";
 import UserWidget from "scenes/widgets/UserWidget";
-import api from "../../axiosInstance";
-import { use } from "react";
 
 const ProfilePage = () => {
   // const [user, setUser] = useState(null);
   const { userId } = useParams();
-  const token = useSelector((state) => state.token);
   const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
   const user=useSelector((state) => state.user);
   console.log('user in profile page is ', user);
-  
-
-
   // useEffect(() => {
   //   getUser();
   // }, []); // eslint-disable-line react-hooks/exhaustive-deps

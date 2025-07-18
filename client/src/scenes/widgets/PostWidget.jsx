@@ -11,6 +11,7 @@ import WidgetWrapper from "components/WidgetWrapper";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPost } from "state";
+import api from "../../axiosInstance"; // Adjust the import path as necessary
 
 const PostWidget = ({
   postId,
@@ -52,15 +53,10 @@ const PostWidget = ({
   if (!newComment.trim()) return;
 
   try {
-    const response = await fetch(`http://localhost:7000/posts/${postId}/comment`, {
-      method: "POST", // or POST if your backend expects that
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ text: newComment, userId: loggedInUserId }),
-
-    });
+    const response = await api.post(`/posts/${postId}/comment`, {
+  text: newComment,
+  userId: loggedInUserId,
+});
 
     const updatedPost = await response.json();
     dispatch(setPost({ post: updatedPost }));
@@ -72,14 +68,9 @@ const PostWidget = ({
 
   const handleDeletePost = async () => {
   try {
-    const response = await fetch(`http://localhost:7000/posts/${postId}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await api.delete(`/posts/${postId}`);
 
-    if (response.ok) {
+    if (response.status === 200) {
       dispatch({ type: "posts/deletePost", payload: postId });
     } else {
       console.error("Failed to delete post");

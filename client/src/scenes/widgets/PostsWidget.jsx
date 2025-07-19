@@ -68,6 +68,8 @@ const getUserPosts = async () => {
             userPicturePath={userPicturePath}
             likes={likes}
             comments={comments}
+            getPosts={getPosts}
+            getUserPosts={getUserPosts}
           />
         )
       )}

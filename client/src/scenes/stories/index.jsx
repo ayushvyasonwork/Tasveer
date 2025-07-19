@@ -132,7 +132,7 @@ const StoriesPage = () => {
               onClick={() => setSelectedStory(story)}
             >
               <Avatar
-                src={`http://localhost:7000/assets/${story.userId?.picturePath}`}
+                src={`${process.env.REACT_APP_API_BASE_URL}/assets/${story.userId?.picturePath}`}
                 alt={story.userId?.firstName}
               />
               <Typography fontWeight="500">
@@ -180,7 +180,7 @@ const StoriesPage = () => {
             boxShadow="0 0 20px rgba(255,255,255,0.1)"
           >
             <img
-              src={`http://localhost:7000${selectedStory.mediaUrl}`}
+              src={`${process.env.REACT_APP_API_BASE_URL}${selectedStory.mediaUrl}`}
               alt="story"
               style={{
                 maxWidth: "100%",

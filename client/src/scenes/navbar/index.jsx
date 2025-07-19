@@ -43,6 +43,16 @@ const Navbar = () => {
 
   const fullName = `${user.firstName} ${user.lastName}`;
 
+  const dropZoneStyle = {
+    backgroundColor: theme.palette.mode === 'dark' ? dark : neutralLight,
+    width: "150px",
+    borderRadius: "0.25rem",
+    p: "0.25rem 1rem",
+    "& .MuiSvgIcon-root": { pr: "0.25rem", width: "3rem" },
+    "& .MuiSelect-select:focus": { backgroundColor: theme.palette.mode === 'dark' ? dark : neutralLight },
+    color: theme.palette.mode === 'dark' ? 'white' : 'black',
+  };
+
   return (
     <>
       <FlexBetween padding="1rem 6%" backgroundColor={alt}>
@@ -81,16 +91,8 @@ const Navbar = () => {
               )}
             </IconButton>
 
-            
-              <VideogameAssetIcon sx={{ fontSize: "25px", cursor: "pointer" }} 
-              onClick={() => navigate('/game')}/>
-            
-
-            
-              <ScheduleIcon sx={{ fontSize: "25px", cursor: "pointer" }} 
-              onClick={() => navigate('/stories')}/>
-          
-
+            <VideogameAssetIcon sx={{ fontSize: "25px", cursor: "pointer" }} onClick={() => navigate('/game')} />
+            <ScheduleIcon sx={{ fontSize: "25px", cursor: "pointer" }} onClick={() => navigate('/stories')} />
             <Message sx={{ fontSize: "25px", cursor: "pointer" }} />
             <Notifications sx={{ fontSize: "25px", cursor: "pointer" }} />
             <Help sx={{ fontSize: "25px", cursor: "pointer" }} />
@@ -98,14 +100,7 @@ const Navbar = () => {
             <FormControl variant="standard" value={fullName}>
               <Select
                 value={fullName}
-                sx={{
-                  backgroundColor: neutralLight,
-                  width: "150px",
-                  borderRadius: "0.25rem",
-                  p: "0.25rem 1rem",
-                  "& .MuiSvgIcon-root": { pr: "0.25rem", width: "3rem" },
-                  "& .MuiSelect-select:focus": { backgroundColor: neutralLight },
-                }}
+                sx={dropZoneStyle}
                 input={<InputBase />}
               >
                 <MenuItem value={fullName}><Typography>{fullName}</Typography></MenuItem>
@@ -136,32 +131,16 @@ const Navbar = () => {
           flexDirection="column"
           gap="2rem"
         >
-          
-            <Close 
-            onClick={() => setIsMobileMenuToggled(false)}
-            sx={{ alignSelf: "flex-end" }}/>
-          
+          <Close onClick={() => setIsMobileMenuToggled(false)} sx={{ alignSelf: "flex-end" }} />
 
-          
-            {theme.palette.mode === "dark" ? (
-              <DarkMode sx={{ fontSize: "25px", cursor: "pointer" }} 
-              onClick={() => dispatch(setMode())}/>
-            ) : (
-              <LightMode sx={{ fontSize: "25px", color: dark, cursor: "pointer" }} 
-              onClick={() => dispatch(setMode())}/>
-            )}
-          
+          {theme.palette.mode === "dark" ? (
+            <DarkMode sx={{ fontSize: "25px", cursor: "pointer" }} onClick={() => dispatch(setMode())} />
+          ) : (
+            <LightMode sx={{ fontSize: "25px", color: dark, cursor: "pointer" }} onClick={() => dispatch(setMode())} />
+          )}
 
-          
-            <VideogameAssetIcon sx={{ fontSize: "25px", cursor: "pointer" }} 
-            onClick={() => { navigate("/game"); setIsMobileMenuToggled(false); }}/>
-         
-
-          
-            <ScheduleIcon sx={{ fontSize: "25px", cursor: "pointer" }} 
-            onClick={() => { navigate("/stories"); setIsMobileMenuToggled(false); }}/>
-          
-
+          <VideogameAssetIcon sx={{ fontSize: "25px", cursor: "pointer" }} onClick={() => { navigate("/game"); setIsMobileMenuToggled(false); }} />
+          <ScheduleIcon sx={{ fontSize: "25px", cursor: "pointer" }} onClick={() => { navigate("/stories"); setIsMobileMenuToggled(false); }} />
           <Message sx={{ fontSize: "25px", cursor: "pointer" }} />
           <Notifications sx={{ fontSize: "25px", cursor: "pointer" }} />
           <Help sx={{ fontSize: "25px", cursor: "pointer" }} />
@@ -169,14 +148,7 @@ const Navbar = () => {
           <FormControl variant="standard" value={fullName}>
             <Select
               value={fullName}
-              sx={{
-                backgroundColor: neutralLight,
-                width: "150px",
-                borderRadius: "0.25rem",
-                p: "0.25rem 1rem",
-                "& .MuiSvgIcon-root": { pr: "0.25rem", width: "3rem" },
-                "& .MuiSelect-select:focus": { backgroundColor: neutralLight },
-              }}
+              sx={dropZoneStyle}
               input={<InputBase />}
             >
               <MenuItem value={fullName}><Typography>{fullName}</Typography></MenuItem>

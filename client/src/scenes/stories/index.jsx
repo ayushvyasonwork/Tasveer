@@ -14,10 +14,7 @@ import Dropzone from "react-dropzone";
 import CloseIcon from "@mui/icons-material/Close";
 import Navbar from "scenes/navbar";
 
-const socket = io(process.env.REACT_APP_API_BASE_URL, {
-  transports: ["websocket"],
-  withCredentials: true,
-});
+import socket from "../../socket";
 
 const StoriesPage = () => {
   const [stories, setStories] = useState([]);

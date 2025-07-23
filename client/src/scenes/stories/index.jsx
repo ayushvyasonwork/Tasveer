@@ -392,7 +392,7 @@ const StoriesPage = () => {
 
             {activeTab === 'mood' && (
               <Box mt={2}>
-                <MoodChart analysis={results.imageVector} />
+                {/* <MoodChart analysis={results.imageVector} /> */}
                 {results.moodMatches.map((song, idx) => (
                   <Button
                     key={`${song.song_name}-${idx}`}

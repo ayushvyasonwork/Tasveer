@@ -98,7 +98,8 @@ const StoriesPage = () => {
 
   const user = useSelector((state) => state.user);
   const { palette } = useTheme(); // Get theme palette
-
+  const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
+  console.log("GEMINI_API_KEY:", apiKey); // Log the API key for debugging
   useEffect(() => {
     fetchStories();
     socket.on('newStory', (newStory) => {
@@ -132,7 +133,6 @@ const StoriesPage = () => {
 
   const analyzeImageWithGemini = async (base64ImageData) => {
     const prompt = `Analyze the mood, theme, and energy of this image. Based on your analysis, provide ONLY a JSON object with the following keys: 'valence' (a score from 0.0 to 1.0 indicating happiness/positivity), 'energy' (a score from 0.0 to 1.0 for intensity/activity), and 'danceability' (a score from 0.0 to 1.0 for how much it makes you want to move). Do not include any text before or after the JSON object.`;
-    const apiKey = "AIzaSyByno6CfZaIhX5k4sWDj8akzNWsMZwxqtg";
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
     const payload = {
@@ -190,7 +190,7 @@ const StoriesPage = () => {
         Return ONLY the final JSON object with the keys "moodMatches" and "communityPicks". Do not include any other text.
     `;
 
-    const apiKey = "AIzaSyByno6CfZaIhX5k4sWDj8akzNWsMZwxqtg";
+    
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
     const payload = {

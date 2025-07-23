@@ -15,8 +15,8 @@ import { createPost } from "./controllers/posts.js";
 import { verifyToken } from "./middleware/auth.js";
 import http from "http";
 import { Server } from "socket.io";
-import storyRoutes from "./routes/storyRoutes.js";
-
+import storyRoutes from "./routes/storyRoutes.js"; // Correct import
+import Story from "./models/Story.js";
 
 /* CONFIGURATIONS */
 const __filename = fileURLToPath(import.meta.url);
@@ -24,15 +24,13 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 const app = express();
 app.use(express.json());
-// app.use(helmet());
-// app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(morgan("common"));
 app.use(bodyParser.json({ limit: "30mb", extended: true }));
 app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
 app.use(cors({
-  origin: "*", // Allows requests from any domain
-  methods: ["GET", "POST", "PUT", "DELETE","PATCH"], // Allow specific methods
-  allowedHeaders: ["Content-Type", "Authorization"], // Allow required headers
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
 app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 
@@ -51,19 +49,12 @@ const upload = multer({ storage });
 app.post("/auth/register", upload.single("picture"), register);
 app.post("/posts", verifyToken, upload.single("picture"), createPost);
 
-
-/* ROUTES */
-app.use("/auth", authRoutes);
-app.use("/users", userRoutes);
-app.use("/posts", postRoutes);
+/* SOCKET.IO SETUP */
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    // origin: "http://localhost:3000", // frontend URL
-    origin:"tasveer-delta.vercel.app",
+    origin: "*", // Or your specific frontend URL
     methods: ["GET", "POST"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
   },
 });
 
@@ -72,7 +63,14 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/stories", storyRoutes);
+/* ROUTES */
+app.use("/auth", authRoutes);
+app.use("/users", userRoutes);
+app.use("/posts", postRoutes);
+// Pass the upload middleware to the story routes
+app.use("/stories", storyRoutes(upload));
+
+
 /* MONGOOSE SETUP */
 const PORT = process.env.PORT || 6001;
 mongoose
@@ -82,13 +80,9 @@ mongoose
   })
   .then(() => {
     server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
-
-
-    /* ADD DATA ONE TIME */
-    // User.insertMany(users);
-    // Post.insertMany(posts);
   })
   .catch((error) => console.log(`${error} did not connect`));
-  app.get('/', (req, res) => {
-    res.send('Server is running');
-  });
+  
+app.get('/', (req, res) => {
+  res.send('Server is running');
+});

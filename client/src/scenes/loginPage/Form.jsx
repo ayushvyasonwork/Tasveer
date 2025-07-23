@@ -6,6 +6,7 @@ import {
   useMediaQuery,
   Typography,
   useTheme,
+  CircularProgress, // Import CircularProgress
 } from "@mui/material";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { Formik } from "formik";
@@ -53,6 +54,7 @@ const initialValuesLogin = {
 
 const Form = () => {
   const [pageType, setPageType] = useState("login");
+  const [isLoading, setIsLoading] = useState(false); // Add loading state
   const { palette } = useTheme();
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -68,42 +70,52 @@ const Form = () => {
     }
     formData.append("picturePath", values.picture.name);
 
-   
-    const savedUserResponse = await api.post("/auth/register", formData
-    );
-    const savedUser = await savedUserResponse.json();
-    onSubmitProps.resetForm();
+    try {
+        const savedUserResponse = await api.post("/auth/register", formData);
+        // Assuming the response is JSON, check if it needs .json()
+        // If api is an axios instance, .data is correct. If it's fetch, it needs .json()
+        const savedUser = savedUserResponse.data; 
+        onSubmitProps.resetForm();
 
-    if (savedUser) {
-      setPageType("login");
+        if (savedUser) {
+            setPageType("login");
+        }
+    } catch (error) {
+        console.error("Registration failed:", error?.response?.data || error.message);
     }
   };
 
  const login = async (values, onSubmitProps) => {
-  try {
-    const response = await api.post("/auth/login", values);
+   try {
+     const response = await api.post("/auth/login", values);
 
-    const loggedIn = response.data;
-    onSubmitProps.resetForm();
+     const loggedIn = response.data;
+     onSubmitProps.resetForm();
 
-    if (loggedIn) {
-      dispatch(
-        setLogin({
-          user: loggedIn.user,
-          token: loggedIn.token,
-        })
-      );
-      navigate("/home");
-    }
-  } catch (error) {
-    console.error("Login failed:", error?.response?.data || error.message);
-    // optionally show error to user
-  }
-};
+     if (loggedIn) {
+       dispatch(
+         setLogin({
+           user: loggedIn.user,
+           token: loggedIn.token,
+         })
+       );
+       navigate("/home");
+     }
+   } catch (error) {
+     console.error("Login failed:", error?.response?.data || error.message);
+     // optionally show error to user
+   }
+ };
 
   const handleFormSubmit = async (values, onSubmitProps) => {
-    if (isLogin) await login(values, onSubmitProps);
-    if (isRegister) await register(values, onSubmitProps);
+    setIsLoading(true); // Start loading
+    if (isLogin) {
+        await login(values, onSubmitProps);
+    }
+    if (isRegister) {
+        await register(values, onSubmitProps);
+    }
+    setIsLoading(false); // Stop loading
   };
 
   return (
@@ -178,24 +190,21 @@ const Form = () => {
                   sx={{ gridColumn: "span 4" }}
                 />
                 <TextField
-  label="Twitter Profile Link"
-  onBlur={handleBlur}
-  onChange={handleChange}
-  value={values.twitter}
-  name="twitter"
-  sx={{ gridColumn: "span 4" }}
-/>
-
-<TextField
-  label="LinkedIn Profile Link"
-  onBlur={handleBlur}
-  onChange={handleChange}
-  value={values.linkedin}
-  name="linkedin"
-  sx={{ gridColumn: "span 4" }}
-/>
-
-
+                  label="Twitter Profile Link"
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  value={values.twitter}
+                  name="twitter"
+                  sx={{ gridColumn: "span 4" }}
+                />
+                <TextField
+                  label="LinkedIn Profile Link"
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  value={values.linkedin}
+                  name="linkedin"
+                  sx={{ gridColumn: "span 4" }}
+                />
                 <Box
                   gridColumn="span 4"
                   border={`1px solid ${palette.neutral.medium}`}
@@ -260,15 +269,20 @@ const Form = () => {
             <Button
               fullWidth
               type="submit"
+              disabled={isLoading} // Disable button when loading
               sx={{
                 m: "2rem 0",
                 p: "1rem",
                 backgroundColor: palette.primary.main,
                 color: palette.background.alt,
                 "&:hover": { color: palette.primary.main },
+                "&:disabled": {
+                    backgroundColor: palette.neutral.light,
+                    cursor: 'not-allowed'
+                }
               }}
             >
-              {isLogin ? "LOGIN" : "REGISTER"}
+              {isLoading ? <CircularProgress size={24} sx={{color: palette.primary.contrastText}}/> : isLogin ? "LOGIN" : "REGISTER"}
             </Button>
             <Typography
               onClick={() => {

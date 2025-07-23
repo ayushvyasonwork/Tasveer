@@ -1,17 +1,19 @@
-import express from "express";
-import { uploadStory, getStories } from "../controllers/storyController.js";
-import { verifyToken } from "../middleware/auth.js";
-import multer from "multer";
+import express from 'express';
+import { uploadStory, getStories } from '../controllers/storyController.js';
+import { verifyToken } from '../middleware/auth.js';
 
-const router = express.Router();
+// The function now accepts the 'upload' middleware as an argument
+const storyRoutes = (upload) => {
+    const router = express.Router();
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "public/assets"),
-  filename: (req, file, cb) => cb(null, file.originalname),
-});
-const upload = multer({ storage });
+    /* READ */
+    router.get("/", verifyToken, getStories);
 
-router.post("/", verifyToken, upload.single("media"), uploadStory);
-router.get("/", verifyToken, getStories);
+    /* POST */
+    // Apply the upload middleware here. The field name 'media' must match the frontend.
+    router.post("/", verifyToken, upload.single("media"), uploadStory);
 
-export default router;
+    return router;
+};
+
+export default storyRoutes;

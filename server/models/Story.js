@@ -11,7 +11,8 @@ const StorySchema = new mongoose.Schema({
     song_name: String,
     artist: String,
     similarity: Number,
-    picks: Number // Added to handle community picks data
+    picks: Number, // Added to handle community picks data
+    youtubeVideoId: { type: String }
   }
 });
 

@@ -8,7 +8,7 @@ import {
   CircularProgress,
   Tabs,
   Tab,
-  useTheme, // Import useTheme
+  useTheme,
 } from '@mui/material';
 import { useSelector } from 'react-redux';
 import Dropzone from 'react-dropzone';
@@ -17,12 +17,13 @@ import Navbar from 'scenes/navbar';
 import api from '../../axiosInstance';
 import socket from '../../socket';
 import { Chart } from 'chart.js/auto';
+import YouTube from 'react-youtube';
 
-// --- Re-integrated MoodChart Component ---
+// --- Re-integrated MoodChart Component (Now Theme-Aware) ---
 const MoodChart = ({ analysis }) => {
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
-  const theme = useTheme(); // Access theme at the top level of the component
+  const theme = useTheme(); // Access theme at the top level
 
   useEffect(() => {
     if (!analysis || !chartRef.current) return;
@@ -40,12 +41,12 @@ const MoodChart = ({ analysis }) => {
           label: 'Image Mood',
           data: [analysis.valence, analysis.energy, analysis.danceability],
           fill: true,
-          backgroundColor: 'rgba(16, 185, 129, 0.2)',
-          borderColor: 'rgb(16, 185, 129)',
-          pointBackgroundColor: 'rgb(16, 185, 129)',
-          pointBorderColor: '#fff',
-          pointHoverBackgroundColor: '#fff',
-          pointHoverBorderColor: 'rgb(16, 185, 129)',
+          backgroundColor: theme.palette.primary.light + '33', // Use theme color with alpha
+          borderColor: theme.palette.primary.main,
+          pointBackgroundColor: theme.palette.primary.main,
+          pointBorderColor: theme.palette.background.alt,
+          pointHoverBackgroundColor: theme.palette.background.alt,
+          pointHoverBorderColor: theme.palette.primary.main,
         }],
       },
       options: {
@@ -56,7 +57,7 @@ const MoodChart = ({ analysis }) => {
             grid: { color: theme.palette.neutral.light },
             pointLabels: { font: { size: 12, weight: '500' }, color: theme.palette.text.secondary },
             ticks: {
-              backdropColor: 'rgba(255, 255, 255, 0)',
+              backdropColor: 'rgba(0, 0, 0, 0)',
               color: theme.palette.text.secondary,
               stepSize: 0.25,
             },
@@ -75,7 +76,7 @@ const MoodChart = ({ analysis }) => {
         chartInstanceRef.current.destroy();
       }
     };
-  }, [analysis, theme]); // Add theme to dependency array
+  }, [analysis, theme]);
 
   return (
     <Box sx={{ position: 'relative', width: '100%', maxWidth: 320, height: 280, mx: 'auto' }}>
@@ -95,11 +96,12 @@ const StoriesPage = () => {
   const [activeTab, setActiveTab] = useState('mood');
   const [error, setError] = useState(null);
   const [selectedSong, setSelectedSong] = useState(null);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
 
   const user = useSelector((state) => state.user);
-  const { palette } = useTheme(); // Get theme palette
+  const { palette } = useTheme();
   const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
-  console.log("GEMINI_API_KEY:", apiKey); // Log the API key for debugging
+
   useEffect(() => {
     fetchStories();
     socket.on('newStory', (newStory) => {
@@ -122,6 +124,7 @@ const StoriesPage = () => {
       console.error('Error fetching stories:', err);
     }
   };
+
   const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -189,7 +192,6 @@ const StoriesPage = () => {
 
         Return ONLY the final JSON object with the keys "moodMatches" and "communityPicks". Do not include any other text.
     `;
-
     
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
@@ -290,12 +292,17 @@ const StoriesPage = () => {
     }
   };
 
+  const handleStoryClick = (story) => {
+    setIsPlayerReady(false);
+    setSelectedStory(story);
+  };
+
   return (
     <Box>
       <Navbar />
 
       {/* Upload Section */}
-      <Box p="1rem" borderBottom={`1px solid ${palette.neutral.light}`} bgcolor={palette.background.alt}>
+      <Box p="1rem" borderBottom={`1px solid ${palette.divider}`} bgcolor={palette.background.alt}>
         <Typography variant="h5" color={palette.text.primary}>Add Story</Typography>
         <Dropzone
           acceptedFiles=".jpg,.jpeg,.png"
@@ -373,7 +380,7 @@ const StoriesPage = () => {
             sx={{
               mt: 2,
               p: 2,
-              border: `1px solid ${palette.neutral.light}`,
+              border: `1px solid ${palette.divider}`,
               borderRadius: 2,
               bgcolor: palette.background.paper,
             }}
@@ -392,7 +399,7 @@ const StoriesPage = () => {
 
             {activeTab === 'mood' && (
               <Box mt={2}>
-                {/* <MoodChart analysis={results.imageVector} /> */}
+                <MoodChart analysis={results.imageVector} />
                 {results.moodMatches.map((song, idx) => (
                   <Button
                     key={`${song.song_name}-${idx}`}
@@ -447,7 +454,7 @@ const StoriesPage = () => {
                   boxShadow: 3,
                   cursor: 'pointer',
                 }}
-                onClick={() => setSelectedStory(story)}
+                onClick={() => handleStoryClick(story)}
               >
                 <img
                   src={`${process.env.REACT_APP_API_BASE_URL}${story.mediaUrl}`}
@@ -507,6 +514,21 @@ const StoriesPage = () => {
             }}
             onClick={(e) => e.stopPropagation()}
           >
+            {selectedStory.song && selectedStory.song.youtubeVideoId && (
+              <YouTube
+                videoId={selectedStory.song.youtubeVideoId}
+                opts={{
+                  height: '0',
+                  width: '0',
+                  playerVars: {
+                    autoplay: 1,
+                    controls: 0,
+                  },
+                }}
+                onReady={() => setIsPlayerReady(true)}
+                style={{ display: 'none' }}
+              />
+            )}
             <IconButton
               onClick={() => setSelectedStory(null)}
               sx={{ 
@@ -531,7 +553,7 @@ const StoriesPage = () => {
               {selectedStory.userId && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <Avatar
-                      src={selectedStory.userId.picturePath}
+                      src={`${process.env.REACT_APP_API_BASE_URL}${selectedStory.userId.picturePath}`}
                       alt={selectedStory.userId.firstName}
                       sx={{ width: 32, height: 32 }}
                   />
@@ -552,7 +574,11 @@ const StoriesPage = () => {
                     gap: 1
                   }}
                 >
-                  <Typography variant="h6" component="span" sx={{ color: 'text.secondary' }}>🎵</Typography>
+                  {!isPlayerReady && selectedStory.song.youtubeVideoId ? (
+                     <CircularProgress size={16} sx={{ mr: 1 }} />
+                  ) : (
+                    <Typography variant="h6" component="span" sx={{ color: 'text.secondary' }}>🎵</Typography>
+                  )}
                   <Box>
                     <Typography variant="caption" display="block" lineHeight={1.2} fontWeight="600">
                       {selectedStory.song.song_name}

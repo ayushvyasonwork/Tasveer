@@ -1,6 +1,6 @@
 import Story from "../models/Story.js";
 import User from "../models/User.js";
-
+import {YouTube} from "youtube-sr";
 // POST: Add new story
 export const uploadStory = async (req, res) => {
   try {
@@ -15,15 +15,30 @@ export const uploadStory = async (req, res) => {
     // The URL path should be accessible to the client.
     const mediaUrl = `/assets/${req.file.filename}`; // Use full URL for client access
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+     let songData = song ? JSON.parse(song) : undefined;
 
+    // --- NEW LOGIC: FIND YOUTUBE VIDEO ID ---
+    if (songData && songData.song_name && songData.artist) {
+      try {
+        const searchQuery = `${songData.song_name} ${songData.artist} official audio`;
+        const video = await YouTube.searchOne(searchQuery);
+        if (video) {
+          songData.youtubeVideoId = video.id;
+          console.log("YouTube video found:", video.id);
+        }
+      } catch (ytError) {
+        console.error("YouTube search failed:", ytError.message);
+        // Don't block the upload, just proceed without a video ID
+      }
+    }
     let newStory = new Story({
       userId,
       mediaUrl,
       expiresAt,
       archived: false,
-      song: song ? JSON.parse(song) : undefined,
+      song: songData
     });
-
+    console.log("New story data:", newStory);
     await newStory.save();
 
     // Populate user info for the socket event so the frontend can display it immediately

@@ -2,9 +2,11 @@ import Story from "../models/Story.js";
 import User from "../models/User.js";
 import {YouTube} from "youtube-sr";
 // POST: Add new story
+const STORIES_CACHE_KEY = "stories";
 export const uploadStory = async (req, res) => {
   try {
     const { userId, song } = req.body;
+     const { redisClient } = req;
     const user = await User.findById(userId); // Verify user exists
 
     if (!user || !req.file) {
@@ -43,7 +45,8 @@ export const uploadStory = async (req, res) => {
 
     // Populate user info for the socket event so the frontend can display it immediately
     newStory = await newStory.populate("userId", "firstName lastName picturePath");
-
+    await redisClient.del(STORIES_CACHE_KEY);
+    console.log("Cache invalidated for stories.");
     req.io.emit("newStory", newStory);
     res.status(201).json(newStory);
   } catch (error) {
@@ -55,12 +58,19 @@ export const uploadStory = async (req, res) => {
 // GET: Get all current stories
 export const getStories = async (req, res) => {
   try {
+    const { redisClient } = req;
+    const cachedStories = await redisClient.get(STORIES_CACHE_KEY);
+    if (cachedStories) {
+      console.log("Cache HIT for stories.");
+      return res.status(200).json(JSON.parse(cachedStories));
+    }
+    console.log("Cache MISS for stories. Fetching from DB.");
     const now = new Date();
     const stories = await Story.find({
       archived: false,
       expiresAt: { $gt: now },
     }).populate("userId", "firstName lastName picturePath").sort({ createdAt: -1 }); // Sort by newest first
-
+    await redisClient.setEx(STORIES_CACHE_KEY, 60, JSON.stringify(stories));
     res.status(200).json(stories);
   } catch (error) {
     console.error("Error in getStories:", error);

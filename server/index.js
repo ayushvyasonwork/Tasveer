@@ -16,13 +16,22 @@ import { verifyToken } from "./middleware/auth.js";
 import http from "http";
 import { Server } from "socket.io";
 import storyRoutes from "./routes/storyRoutes.js"; // Correct import
-import Story from "./models/Story.js";
+import { createClient } from "redis";
+
 
 /* CONFIGURATIONS */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config();
 const app = express();
+const redisClient = createClient({
+  url: process.env.REDIS_URL
+});
+redisClient.on('error', (err) => console.log('Redis Client Error', err));
+
+(async () => {
+  await redisClient.connect();
+})();
 app.use(express.json());
 app.use(morgan("common"));
 app.use(bodyParser.json({ limit: "30mb", extended: true }));
@@ -60,6 +69,7 @@ const io = new Server(server, {
 
 app.use((req, res, next) => {
   req.io = io;
+  req.redisClient = redisClient;
   next();
 });
 

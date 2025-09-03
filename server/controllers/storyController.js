@@ -6,6 +6,7 @@ const STORIES_CACHE_KEY = "stories";
 export const uploadStory = async (req, res) => {
   try {
     const { userId, song } = req.body;
+    console.log("uploadStory called with userId:", userId);
      const { redisClient } = req;
     const user = await User.findById(userId); // Verify user exists
 

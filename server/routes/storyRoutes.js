@@ -3,7 +3,7 @@ import { uploadStory, getStories } from '../controllers/storyController.js';
 import { verifyToken } from '../middleware/auth.js';
 
 // The function now accepts the 'upload' middleware as an argument
-const storyRoutes = (upload) => {
+const storyRoutes = (uploadWithCheck) => {
     const router = express.Router();
 
     /* READ */
@@ -11,7 +11,7 @@ const storyRoutes = (upload) => {
 
     /* POST */
     // Apply the upload middleware here. The field name 'media' must match the frontend.
-    router.post("/", verifyToken, upload.single("media"), uploadStory);
+    router.post("/", verifyToken, uploadWithCheck, uploadStory);
 
     return router;
 };

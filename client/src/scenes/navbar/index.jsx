@@ -98,15 +98,26 @@ const Navbar = () => {
             <Help sx={{ fontSize: "25px", cursor: "pointer" }} />
 
             <FormControl variant="standard" value={fullName}>
-              <Select
-                value={fullName}
-                sx={dropZoneStyle}
-                input={<InputBase />}
-              >
-                <MenuItem value={fullName}><Typography>{fullName}</Typography></MenuItem>
-                <MenuItem onClick={() => dispatch(setLogout())}>Log Out</MenuItem>
-              </Select>
-            </FormControl>
+  <Select
+    value={fullName}
+    sx={{
+      ...dropZoneStyle,
+      color: 'black', // Set text color for the displayed value
+    }}
+    input={<InputBase />}
+  >
+    <MenuItem value={fullName} sx={{ color: 'black' }}>
+      <Typography>{fullName}</Typography>
+    </MenuItem>
+    <MenuItem 
+      onClick={() => dispatch(setLogout())} 
+      sx={{ color: 'black' }}  // Force black text color
+    >
+      Log Out
+    </MenuItem>
+  </Select>
+</FormControl>
+
           </FlexBetween>
         ) : (
           <IconButton onClick={() => setIsMobileMenuToggled(!isMobileMenuToggled)}>

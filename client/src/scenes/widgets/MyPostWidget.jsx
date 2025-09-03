@@ -36,18 +36,20 @@ const MyPostWidget = ({ picturePath }) => {
   const isNonMobileScreens = useMediaQuery("(min-width: 1000px)");
   const mediumMain = palette.neutral.mediumMain;
   const medium = palette.neutral.medium;
-
-  const handlePost = async () => {
+const handlePost = async () => {
   try {
     const formData = new FormData();
     formData.append("userId", _id);
     formData.append("description", post);
+
     if (image) {
-      formData.append("picture", image);
+      formData.append("picture", image); // <-- File object, not JSON
       formData.append("picturePath", image.name);
     }
 
-    const response = await api.post("/posts", formData);
+    const response = await api.post("/posts", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
 
     dispatch(setPosts({ posts: response.data }));
     setImage(null);
@@ -56,6 +58,7 @@ const MyPostWidget = ({ picturePath }) => {
     console.error("Error creating post:", error.response?.data || error.message);
   }
 };
+
 
   
   return (

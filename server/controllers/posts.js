@@ -1,32 +1,32 @@
 import Post from "../models/Post.js";
 import User from "../models/User.js";
+import { getImageUrl } from "../utils/getImageUrl.js";
 
-/* CREATE */
 export const createPost = async (req, res) => {
   try {
-    const { userId, description, picturePath } = req.body;
-    console.log('req body in backend is ',req.body);
-    const user = await User.findOne({_id:userId});
-    console.log('user in backend is ',user);
+    const { userId, description } = req.body;
+    const user = await User.findById(userId);
+
     const newPost = new Post({
       userId,
-      firstName: user?.firstName,
-      lastName: user?.lastName,
-      location: user?.location,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      location: user.location,
       description,
-      userPicturePath: user?.picturePath,
-      picturePath,
+      userPicturePath: getImageUrl(req, user.picturePath),
+      picturePath: getImageUrl(req, req.file?.filename),
       likes: {},
       comments: [],
     });
+    
     await newPost.save();
-
-    const post = await Post.find();
-    res.status(201).json(post);
-  } catch (err) {   
+    const posts = await Post.find().sort({ createdAt: -1 });
+    res.status(201).json(posts);
+  } catch (err) {
     res.status(409).json({ message: err.message });
   }
 };
+
 export const deletePost=async (req,res)=>{
   // const {userId}=req.body;
   const {id}=req.params;

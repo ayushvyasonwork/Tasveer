@@ -56,7 +56,8 @@ const PostWidget = ({
   const { palette } = useTheme();
   const main = palette.neutral.main;
   const primary = palette.primary.main;
-
+  console.log('user picture path is ',userPicturePath);
+  console.log('picture path is ',picturePath);
   // Handle Like
   const patchLike = async () => {
     try {

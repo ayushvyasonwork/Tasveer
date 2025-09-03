@@ -17,7 +17,7 @@ import http from "http";
 import { Server } from "socket.io";
 import storyRoutes from "./routes/storyRoutes.js"; // Correct import
 import { createClient } from "redis";
-
+import { uploadWithCheck } from "./middleware/upload.js";
 
 /* CONFIGURATIONS */
 const __filename = fileURLToPath(import.meta.url);
@@ -43,20 +43,9 @@ app.use(cors({
 }));
 app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 
-/* FILE STORAGE */
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/assets");
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);
-  },
-});
-const upload = multer({ storage });
-
 /* ROUTES WITH FILES */
-app.post("/auth/register", upload.single("picture"), register);
-app.post("/posts", verifyToken, upload.single("picture"), createPost);
+app.post("/auth/register", uploadWithCheck, register);
+app.post("/posts", verifyToken, uploadWithCheck, createPost);
 
 /* SOCKET.IO SETUP */
 const server = http.createServer(app);
@@ -78,7 +67,7 @@ app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/posts", postRoutes);
 // Pass the upload middleware to the story routes
-app.use("/stories", storyRoutes(upload));
+app.use("/stories", storyRoutes(uploadWithCheck));
 
 
 /* MONGOOSE SETUP */

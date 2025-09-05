@@ -35,7 +35,7 @@ You need to have Node.js and npm installed on your machine. You will also need a
 
 1.  **Clone the repository**
     ```sh
-    git clone [https://github.com/your-username/tasveer.git](https://github.com/your-username/tasveer.git)
+    git clone [https://github.com/ayushvyasonwork/tasveer.git](https://github.com/ayushvyasonwork/tasveer.git)
     ```
 
 2.  **Install Backend Dependencies**

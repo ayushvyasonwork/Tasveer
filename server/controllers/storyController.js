@@ -9,9 +9,11 @@ export const uploadStory = async (req, res) => {
     console.log("uploadStory called with userId:", userId);
      const { redisClient } = req;
     const user = await User.findById(userId); // Verify user exists
-
-    if (!user || !req.file) {
-      return res.status(400).json({ error: "User ID and file are required" });
+    if (!user) {
+      return res.status(400).json({ error: "User ID required" });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: "file are required" });
     }
 
     // IMPORTANT: Make sure your server is configured to serve static files from the 'public/assets' directory.

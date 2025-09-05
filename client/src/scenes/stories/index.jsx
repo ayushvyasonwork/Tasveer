@@ -274,7 +274,7 @@ const StoriesPage = () => {
     try {
       const formData = new FormData();
       formData.append('userId', user._id);
-      formData.append('media', image);
+      formData.append('picture', image);
       
       if (selectedSong) {
         formData.append('song', JSON.stringify(selectedSong));

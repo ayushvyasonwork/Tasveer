@@ -80,8 +80,7 @@ mongoose
   .then(() => {
     server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
   })
-  .catch((error) => console.log(`${error} did not connect`));
-  
+  .catch((error) => console.log(`${error} did not connect`));  
 app.get('/', (req, res) => {
   res.send('Server is running');
 });

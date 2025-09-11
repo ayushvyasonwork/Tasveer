@@ -25,7 +25,7 @@ import Friend from "components/Friend";
 import WidgetWrapper from "components/WidgetWrapper";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setPost } from "state";
+import { setPost ,removePost} from "state";
 import api from "../../axiosInstance";
 
 const PostWidget = ({
@@ -89,21 +89,31 @@ const PostWidget = ({
   };
 
   // Delete Post
-  const handleDeletePost = async () => {
-    setLoading(true);
-    try {
-      await api.delete(`/posts/${postId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+ const handleDeletePost = async () => {
+  setLoading(true);
+  try {
+    await api.delete(`/posts/${postId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-      setOpen(false);
-      isProfile ? await getUserPosts() : await getPosts(); // Refresh
-    } catch (err) {
-      console.error("Delete failed:", err); 
-    } finally {
-      setLoading(false);
+    // ✅ Update Redux/State immediately
+    dispatch(removePost({ postId })); 
+
+    // Close modal/dialog
+    setOpen(false);
+
+    // If you still want to refetch in profile page:
+    if (isProfile) {
+      await getUserPosts();
     }
-  };
+
+  } catch (err) {
+    console.error("Delete failed:", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // Get Comments
   const getComments = async () => {
@@ -142,7 +152,8 @@ const PostWidget = ({
           height="auto"
           alt="post"
           style={{ borderRadius: "0.75rem", marginTop: "0.75rem" }}
-          src={`${process.env.REACT_APP_API_BASE_URL}/assets/${picturePath}`}
+          // src={`${process.env.REACT_APP_API_BASE_URL}/assets/${picturePath}`}
+          src={`${picturePath}`}
         />
       )}
 
@@ -191,7 +202,8 @@ const PostWidget = ({
               <Divider />
               <FlexBetween gap="0.75rem" sx={{ m: "0.5rem 0", pl: "1rem" }}>
                 <img
-                  src={`${process.env.REACT_APP_API_BASE_URL}/assets/${comment.userId.picturePath}`}
+                  // src={`${process.env.REACT_APP_API_BASE_URL}/assets/${comment.userId.picturePath}`}
+                  src={`${comment.userId.picturePath}`}
                   alt="user"
                   width="30"
                   height="30"

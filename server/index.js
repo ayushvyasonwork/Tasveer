@@ -3,7 +3,7 @@ import bodyParser from "body-parser";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
-import multer from "multer";
+// import multer from "multer";
 import morgan from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -18,6 +18,8 @@ import { Server } from "socket.io";
 import storyRoutes from "./routes/storyRoutes.js"; // Correct import
 import { createClient } from "redis";
 import { uploadWithCheck } from "./middleware/upload.js";
+import { cloudinary } from "./config/cloudinary.js";
+
 
 /* CONFIGURATIONS */
 const __filename = fileURLToPath(import.meta.url);
@@ -55,23 +57,6 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
   },
 });
-
-app.use((req, res, next) => {
-  req.io = io;
-  req.redisClient = redisClient;
-  next();
-});
-
-/* ROUTES */
-app.use("/auth", authRoutes);
-app.use("/users", userRoutes);
-app.use("/posts", postRoutes);
-// Pass the upload middleware to the story routes
-app.use("/stories", storyRoutes(uploadWithCheck));
-
-
-/* MONGOOSE SETUP */
-const PORT = process.env.PORT || 6001;
 mongoose
   .connect(process.env.MONGO_URL, {
     useNewUrlParser: true,
@@ -81,6 +66,21 @@ mongoose
     server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
   })
   .catch((error) => console.log(`${error} did not connect`));  
+
+app.use((req, res, next) => {
+  req.io = io;
+  req.redisClient = redisClient;
+  next();
+});
+/* ROUTES */
+app.use("/auth", authRoutes);
+app.use("/users", userRoutes);
+app.use("/posts", postRoutes);
+// Pass the upload middleware to the story routes
+app.use("/stories", storyRoutes(uploadWithCheck));
+/* MONGOOSE SETUP */
+const PORT = process.env.PORT || 6001;
+
 app.get('/', (req, res) => {
   res.send('Server is running');
 });

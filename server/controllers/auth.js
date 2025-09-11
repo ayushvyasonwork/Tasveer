@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
 /* REGISTER USER */
+/* REGISTER USER */
 export const register = async (req, res) => {
   try {
     const {
@@ -10,30 +11,33 @@ export const register = async (req, res) => {
       lastName,
       email,
       password,
-      picturePath,
-      friends,
       location,
       occupation,
-       twitter, linkedin
+      twitter,
+      linkedin,
     } = req.body;
 
     const salt = await bcrypt.genSalt();
     const passwordHash = await bcrypt.hash(password, salt);
+
+    // ✅ Multer stores file as req.file
+    const picturePath = req.file ? req.file.filename : "";
 
     const newUser = new User({
       firstName,
       lastName,
       email,
       password: passwordHash,
-      picturePath,
-      friends,
+      picturePath, // local filename or later replace with cloudinary URL
+      friends: [],
       location,
       occupation,
       viewedProfile: Math.floor(Math.random() * 10000),
       impressions: Math.floor(Math.random() * 10000),
-       twitter,
-  linkedin,
+      twitter,
+      linkedin,
     });
+
     const savedUser = await newUser.save();
     res.status(201).json(savedUser);
   } catch (err) {

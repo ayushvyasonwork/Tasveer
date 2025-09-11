@@ -25,7 +25,15 @@ const registerSchema = yup.object().shape({
   password: yup.string().required("required"),
   location: yup.string().required("required"),
   occupation: yup.string().required("required"),
-  picture: yup.string().required("required"),
+  picture: yup
+    .mixed()
+    .required("required")
+    .test("fileType", "Unsupported File Format", (value) => {
+      if (!value) return false;
+      return ["image/jpeg", "image/png", "image/jpg", "image/webp", "image/gif"].includes(
+        value.type
+      );
+    }),
   twitter: yup.string().url("Invalid Twitter URL").nullable(),
   linkedin: yup.string().url("Invalid LinkedIn URL").nullable(),
 });
@@ -55,6 +63,7 @@ const initialValuesLogin = {
 const Form = () => {
   const [pageType, setPageType] = useState("login");
   const [isLoading, setIsLoading] = useState(false); // Add loading state
+  const [error, setError] = useState(''); // Error state to manage error messages
   const { palette } = useTheme();
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -63,57 +72,61 @@ const Form = () => {
   const isRegister = pageType === "register";
 
   const register = async (values, onSubmitProps) => {
-    // this allows us to send form info with image
     const formData = new FormData();
     for (let value in values) {
-      formData.append(value, values[value]);
+      if (value === "picture") {
+        formData.append("picture", values.picture); // 👈 actual file
+      } else {
+        formData.append(value, values[value]);
+      }
     }
-    formData.append("picturePath", values.picture.name);
 
     try {
-        const savedUserResponse = await api.post("/auth/register", formData);
-        // Assuming the response is JSON, check if it needs .json()
-        // If api is an axios instance, .data is correct. If it's fetch, it needs .json()
-        const savedUser = savedUserResponse.data; 
-        onSubmitProps.resetForm();
+      const savedUserResponse = await api.post("/auth/register", formData, {
+        headers: { "Content-Type": "multipart/form-data" }, // 👈 important
+      });
+      const savedUser = savedUserResponse.data;
+      onSubmitProps.resetForm();
 
-        if (savedUser) {
-            setPageType("login");
-        }
+      if (savedUser) {
+        setPageType("login");
+      }
     } catch (error) {
-        console.error("Registration failed:", error?.response?.data || error.message);
+      console.error("Registration failed:", error?.response?.data || error.message);
     }
   };
 
- const login = async (values, onSubmitProps) => {
-   try {
-     const response = await api.post("/auth/login", values);
+  const login = async (values, onSubmitProps) => {
+    try {
+      const response = await api.post("/auth/login", values);
 
-     const loggedIn = response.data;
-     onSubmitProps.resetForm();
+      const loggedIn = response.data;
+      onSubmitProps.resetForm();
 
-     if (loggedIn) {
-       dispatch(
-         setLogin({
-           user: loggedIn.user,
-           token: loggedIn.token,
-         })
-       );
-       navigate("/home");
-     }
-   } catch (error) {
-     console.error("Login failed:", error?.response?.data || error.message);
-     // optionally show error to user
-   }
- };
+      if (loggedIn) {
+        dispatch(
+          setLogin({
+            user: loggedIn.user,
+            token: loggedIn.token,
+          })
+        );
+        navigate("/home");
+      }
+    } catch (error) {
+      const errorMessage = error?.response?.data || error.message;
+      setError(errorMessage); // Set the error message to display it on UI
+
+      console.error("Login failed:", errorMessage);
+    }
+  };
 
   const handleFormSubmit = async (values, onSubmitProps) => {
     setIsLoading(true); // Start loading
     if (isLogin) {
-        await login(values, onSubmitProps);
+      await login(values, onSubmitProps);
     }
     if (isRegister) {
-        await register(values, onSubmitProps);
+      await register(values, onSubmitProps);
     }
     setIsLoading(false); // Stop loading
   };
@@ -151,9 +164,7 @@ const Form = () => {
                   onChange={handleChange}
                   value={values.firstName}
                   name="firstName"
-                  error={
-                    Boolean(touched.firstName) && Boolean(errors.firstName)
-                  }
+                  error={Boolean(touched.firstName) && Boolean(errors.firstName)}
                   helperText={touched.firstName && errors.firstName}
                   sx={{ gridColumn: "span 2" }}
                 />
@@ -183,9 +194,7 @@ const Form = () => {
                   onChange={handleChange}
                   value={values.occupation}
                   name="occupation"
-                  error={
-                    Boolean(touched.occupation) && Boolean(errors.occupation)
-                  }
+                  error={Boolean(touched.occupation) && Boolean(errors.occupation)}
                   helperText={touched.occupation && errors.occupation}
                   sx={{ gridColumn: "span 4" }}
                 />
@@ -264,6 +273,14 @@ const Form = () => {
             />
           </Box>
 
+          {/* Error Message */}
+          {error && (
+  <Typography color="error" sx={{ textAlign: 'center', marginBottom: '10px' }}>
+    {error?.msg || error} {/* Check if error has `msg`, otherwise render the error directly */}
+  </Typography>
+)}
+
+
           {/* BUTTONS */}
           <Box>
             <Button
@@ -277,17 +294,18 @@ const Form = () => {
                 color: palette.background.alt,
                 "&:hover": { color: palette.primary.main },
                 "&:disabled": {
-                    backgroundColor: palette.neutral.light,
-                    cursor: 'not-allowed'
+                  backgroundColor: palette.neutral.light,
+                  cursor: 'not-allowed'
                 }
               }}
             >
-              {isLoading ? <CircularProgress size={24} sx={{color: palette.primary.contrastText}}/> : isLogin ? "LOGIN" : "REGISTER"}
+              {isLoading ? <CircularProgress size={24} sx={{ color: palette.primary.contrastText }} /> : isLogin ? "LOGIN" : "REGISTER"}
             </Button>
             <Typography
               onClick={() => {
                 setPageType(isLogin ? "register" : "login");
                 resetForm();
+                setError(''); // Clear error when switching between forms
               }}
               sx={{
                 textDecoration: "underline",
@@ -298,9 +316,7 @@ const Form = () => {
                 },
               }}
             >
-              {isLogin
-                ? "Don't have an account? Sign Up here."
-                : "Already have an account? Login here."}
+              {isLogin ? "Don't have an account? Sign Up here." : "Already have an account? Login here."}
             </Typography>
           </Box>
         </form>

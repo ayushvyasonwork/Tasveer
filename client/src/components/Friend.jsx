@@ -4,8 +4,22 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { setFriends } from "state";
 import FlexBetween from "./FlexBetween";
-import UserImage from "./UserImage";
+// import UserImage from "./UserImage";
 import api from "../axiosInstance"; // Adjust the import path as necessary
+const UserImage = ({ image, size = "60px" }) => {
+  return (
+    <Box width={size} height={size}>
+      <img
+        style={{ objectFit: "cover", borderRadius: "50%" }}
+        width={size}
+        height={size}
+        alt="user"
+        // src={`${process.env.REACT_APP_API_BASE_URL}/assets/${image}`}
+        src={`${image}`}
+      />
+    </Box>
+  );
+};
 
 const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
   const dispatch = useDispatch();
@@ -23,22 +37,21 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
   const isFriend = friends.find((friend) => friend._id === friendId);
 
   const patchFriend = async () => {
-  if (_id === friendId) return; // avoid making request to self
-
-  try {
-    const response = await api.patch(`/users/${_id}/${friendId}`);
-    dispatch(setFriends({ friends: response.data }));
-  } catch (error) {
-    console.error("Error updating friend status:", error);
-  }
-};
-  console.log("Logged-in user ID (_id):", _id);
-  console.log("Friend card user ID (friendId):", friendId);
+    if (_id === friendId) return; // avoid making request to self
+    try {
+      const response = await api.patch(`/users/${_id}/${friendId}`);
+      dispatch(setFriends({ friends: response.data }));
+    } catch (error) {
+      console.error("Error updating friend status:", error);
+    }
+  };
 
   return (
     <FlexBetween>
       <FlexBetween gap="1rem">
+        {/* ✅ Correct usage of UserImage */}
         <UserImage image={userPicturePath} size="55px" />
+
         <Box
           onClick={() => {
             navigate(`/profile/${friendId}`);
@@ -63,6 +76,8 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
           </Typography>
         </Box>
       </FlexBetween>
+
+      {/* Show add/remove friend button only if not self */}
       {friendId && _id !== friendId && (
         <IconButton
           onClick={patchFriend}

@@ -20,7 +20,6 @@ linkedin: {
   type: String,
   default: "",
 },
-         // <-- added
   },
   { timestamps: true }
 );

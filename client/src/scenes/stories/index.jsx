@@ -457,7 +457,7 @@ const StoriesPage = () => {
                 onClick={() => handleStoryClick(story)}
               >
                 <img
-                  src={`${process.env.REACT_APP_API_BASE_URL}${story.mediaUrl}`}
+                  src={`${story.mediaUrl}`}
                   alt="story"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
@@ -553,7 +553,7 @@ const StoriesPage = () => {
               {selectedStory.userId && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <Avatar
-                      src={`${process.env.REACT_APP_API_BASE_URL}${selectedStory.userId.picturePath}`}
+                      src={`${selectedStory.userId.picturePath}`}
                       alt={selectedStory.userId.firstName}
                       sx={{ width: 32, height: 32 }}
                   />
@@ -601,7 +601,7 @@ const StoriesPage = () => {
               overflow: 'hidden',
             }}>
               <img
-                src={`${process.env.REACT_APP_API_BASE_URL}${selectedStory.mediaUrl}`}
+                src={`${selectedStory.mediaUrl}`}
                 alt="Selected Story"
                 style={{
                   maxWidth: '100%',

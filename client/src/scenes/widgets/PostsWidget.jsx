@@ -41,10 +41,6 @@ const getUserPosts = async () => {
   }
 };
 useEffect(() => {
-  console.log("useEffect fired 🚀");
-}, []);
-
-useEffect(() => {
   console.log("isProfile is", isProfile);
   if (isProfile) {
     console.log("calling getUserPosts()");

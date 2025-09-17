@@ -16,6 +16,7 @@ import {
   Button,
   IconButton,
   useMediaQuery,
+  CircularProgress,   // <-- import loader
 } from "@mui/material";
 import FlexBetween from "components/FlexBetween";
 import Dropzone from "react-dropzone";
@@ -24,43 +25,46 @@ import WidgetWrapper from "components/WidgetWrapper";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPosts } from "state";
-import api from "../../axiosInstance"; // Adjust the import path as necessary
+import api from "../../axiosInstance"; // Adjust path
 
 const MyPostWidget = ({ picturePath }) => {
   const dispatch = useDispatch();
   const [isImage, setIsImage] = useState(false);
   const [image, setImage] = useState(null);
   const [post, setPost] = useState("");
+  const [loading, setLoading] = useState(false); // <-- new state
   const { palette } = useTheme();
   const { _id } = useSelector((state) => state.user);
   const isNonMobileScreens = useMediaQuery("(min-width: 1000px)");
   const mediumMain = palette.neutral.mediumMain;
   const medium = palette.neutral.medium;
-const handlePost = async () => {
-  try {
-    const formData = new FormData();
-    formData.append("userId", _id);
-    formData.append("description", post);
 
-    if (image) {
-      formData.append("picture", image); // <-- File object, not JSON
-      formData.append("picturePath", image.name);
+  const handlePost = async () => {
+    try {
+      setLoading(true); // start loader
+      const formData = new FormData();
+      formData.append("userId", _id);
+      formData.append("description", post);
+
+      if (image) {
+        formData.append("picture", image);
+        formData.append("picturePath", image.name);
+      }
+
+      const response = await api.post("/posts/", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      dispatch(setPosts({ posts: response.data }));
+      setImage(null);
+      setPost("");
+    } catch (error) {
+      console.error("Error creating post:", error.response?.data || error.message);
+    } finally {
+      setLoading(false); // stop loader
     }
+  };
 
-    const response = await api.post("/posts", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-
-    dispatch(setPosts({ posts: response.data }));
-    setImage(null);
-    setPost("");
-  } catch (error) {
-    console.error("Error creating post:", error.response?.data || error.message);
-  }
-};
-
-
-  
   return (
     <WidgetWrapper>
       <FlexBetween gap="1.5rem">
@@ -77,13 +81,9 @@ const handlePost = async () => {
           }}
         />
       </FlexBetween>
+
       {isImage && (
-        <Box
-          border={`1px solid ${medium}`}
-          borderRadius="5px"
-          mt="1rem"
-          p="1rem"
-        >
+        <Box border={`1px solid ${medium}`} borderRadius="5px" mt="1rem" p="1rem">
           <Dropzone
             acceptedFiles=".jpg,.jpeg,.png"
             multiple={false}
@@ -109,10 +109,7 @@ const handlePost = async () => {
                   )}
                 </Box>
                 {image && (
-                  <IconButton
-                    onClick={() => setImage(null)}
-                    sx={{ width: "15%" }}
-                  >
+                  <IconButton onClick={() => setImage(null)} sx={{ width: "15%" }}>
                     <DeleteOutlined />
                   </IconButton>
                 )}
@@ -141,12 +138,10 @@ const handlePost = async () => {
               <GifBoxOutlined sx={{ color: mediumMain }} />
               <Typography color={mediumMain}>Clip</Typography>
             </FlexBetween>
-
             <FlexBetween gap="0.25rem">
               <AttachFileOutlined sx={{ color: mediumMain }} />
               <Typography color={mediumMain}>Attachment</Typography>
             </FlexBetween>
-
             <FlexBetween gap="0.25rem">
               <MicOutlined sx={{ color: mediumMain }} />
               <Typography color={mediumMain}>Audio</Typography>
@@ -157,19 +152,23 @@ const handlePost = async () => {
             <MoreHorizOutlined sx={{ color: mediumMain }} />
           </FlexBetween>
         )}
+
         <Button
-          disabled={!post}
+          disabled={!post || loading}
           onClick={handlePost}
           sx={{
             color: palette.background.alt,
             backgroundColor: palette.primary.main,
             borderRadius: "3rem",
+            minWidth: "100px",
+            height: "40px",
           }}
         >
-          POST
+          {loading ? <CircularProgress size={20} color="inherit" /> : "POST"}
         </Button>
       </FlexBetween>
     </WidgetWrapper>
   );
 };
+
 export default MyPostWidget;

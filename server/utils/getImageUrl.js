@@ -1,22 +1,22 @@
-export const getImageUrl = async (req, filename) => {
-  if (!filename) return null;
+export const getImageUrl = async (req, publicId) => {
+  if (!publicId) return null;
 
-  // ✅ If already a full URL (Cloudinary or http://...), return as-is
-  if (filename.startsWith("http")) {
-    return filename;
+  // 1️⃣ If already a full Cloudinary (or any http/https) URL, return as is
+  if (publicId.startsWith("http://") || publicId.startsWith("https://")) {
+    return publicId;
   }
 
   try {
-    // ✅ Check Redis cache for Cloudinary URL
-    const cachedUrl = await req.redisClient.get(`image:${filename}`);
+    // 2️⃣ Try Redis cache first
+    const cachedUrl = await req.redisClient.get(`image:${publicId}`);
     if (cachedUrl) {
-      return JSON.parse(cachedUrl);
+      console.log("Fetched image URL from Redis:", cachedUrl);
+      return cachedUrl;
     }
   } catch (err) {
     console.error("Redis fetch error:", err.message);
   }
 
-  // ✅ Fallback to local server path
-  const baseUrl = `${req.protocol}://${req.get("host")}`;
-  return `${baseUrl}/assets/${filename}`;
+  // 3️⃣ Otherwise build Cloudinary URL
+  return `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/${publicId}`;
 };

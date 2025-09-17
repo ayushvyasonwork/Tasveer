@@ -3,6 +3,7 @@ import bodyParser from "body-parser";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
+dotenv.config();
 // import multer from "multer";
 import morgan from "morgan";
 import path from "path";
@@ -24,7 +25,7 @@ import { cloudinary } from "./config/cloudinary.js";
 /* CONFIGURATIONS */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config();
+
 const app = express();
 const redisClient = createClient({
   url: process.env.REDIS_URL
@@ -43,6 +44,11 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
+app.use((req, res, next) => {
+  req.io = io;
+  req.redisClient = redisClient;
+  next();
+});
 app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 
 /* ROUTES WITH FILES */
@@ -57,8 +63,7 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
   },
 });
-mongoose
-  .connect(process.env.MONGO_URL, {
+mongoose.connect(process.env.MONGO_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
@@ -67,11 +72,6 @@ mongoose
   })
   .catch((error) => console.log(`${error} did not connect`));  
 
-app.use((req, res, next) => {
-  req.io = io;
-  req.redisClient = redisClient;
-  next();
-});
 /* ROUTES */
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);

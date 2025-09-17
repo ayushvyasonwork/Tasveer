@@ -1,20 +1,10 @@
 import multer from "multer";
 import path from "path";
-import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
-import { cloudinary } from "../config/cloudinary.js"; // adjust import
+import { cloudinary } from "../config/cloudinary.js";
 
-// Multer storage with unique ID + extension
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "public/assets");
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const uniqueName = uuidv4() + ext; // e.g. "a8c3f1b0-9e3f-4c12-b5a0.png"
-    cb(null, uniqueName);
-  },
-});
+// Multer memory storage (no local saving)
+const storage = multer.memoryStorage();
 
 // File filter
 const fileFilter = (req, file, cb) => {
@@ -25,10 +15,9 @@ const fileFilter = (req, file, cb) => {
   cb(null, true);
 };
 
-// Multer upload instance
 const upload = multer({ storage, fileFilter });
 
-// Custom middleware with Cloudinary + Redis
+// Middleware → upload to Cloudinary immediately
 export const uploadWithCheck = (req, res, next) => {
   const singleUpload = upload.single("picture");
 
@@ -36,42 +25,47 @@ export const uploadWithCheck = (req, res, next) => {
     if (err) {
       return res.status(400).json({ message: err.message });
     }
+
     if (!req.file) {
       return res.status(400).json({ message: "No image file uploaded" });
     }
 
-    const filePath = `public/assets/${req.file.filename}`;
-    if (!fs.existsSync(filePath)) {
-      return res.status(500).json({ message: "Image upload failed" });
-    }
-
-    // ✅ Async upload to Cloudinary
-    (async () => {
-      try {
-        const uploadResult = await cloudinary.uploader.upload(filePath, {
+    try {
+      // Upload to Cloudinary directly from buffer
+      const uploadResult = await cloudinary.uploader.upload_stream(
+        {
           folder: "social_app",
           resource_type: "image",
-          public_id: path.parse(req.file.filename).name, // use unique id (without ext)
-        });
+          public_id: uuidv4(),
+        },
+        async (error, result) => {
+          if (error) {
+            console.error("❌ Cloudinary upload failed:", error.message);
+            return res.status(500).json({ message: "Cloudinary upload failed" });
+          }
 
-        // Invalidate caches
-        await req.redisClient.del("stories");
-        await req.redisClient.del("posts");
+          // ✅ Save Cloudinary URL in Redis
+          await req.redisClient.setEx(
+            `image:${result.public_id}`,
+            24 * 60 * 60, // 1 day
+            result.secure_url
+          );
 
-        // Save mapping in Redis (local filename → Cloudinary URL)
-        await req.redisClient.setEx(
-          `image:${req.file.filename}`,
-          24 * 60 * 60, // 1 day
-          uploadResult.secure_url
-        );
+          // Attach Cloudinary info to req
+          req.cloudinaryImage = {
+            public_id: result.public_id,
+            url: result.secure_url,
+          };
+          console.log("✅ Image uploaded to Cloudinary:", result.secure_url);
+          next();
+        }
+      );
 
-        console.log("✅ Uploaded to Cloudinary:", uploadResult.secure_url);
-      } catch (cloudErr) {
-        console.error("❌ Cloudinary upload failed:", cloudErr.message);
-      }
-    })();
-
-    // Continue to controller
-    next();
+      // Write buffer to stream
+      uploadResult.end(req.file.buffer);
+    } catch (uploadErr) {
+      console.error("Upload middleware error:", uploadErr.message);
+      return res.status(500).json({ message: "Image processing failed" });
+    }
   });
 };

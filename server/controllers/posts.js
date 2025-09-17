@@ -1,74 +1,37 @@
 import Post from "../models/Post.js";
 import User from "../models/User.js";
 import { getImageUrl } from "../utils/getImageUrl.js";
-import { v2 as cloudinary } from "cloudinary";
+import { cloudinary } from "../config/cloudinary.js";
 import fs from "fs";
 import path from "path";
 
-/* -------------------- CREATE POST -------------------- */
+
 export const createPost = async (req, res) => {
   try {
     const { userId, description } = req.body;
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const pictureFilename = req.file?.filename; // saved by multer
-    const pictureUrl = await getImageUrl(req, pictureFilename);
+    // Cloudinary info from middleware
+    const cloudinaryImage = req.cloudinaryImage;
 
-    // ✅ Save post immediately (local URL / fallback until Cloudinary is ready)
-    let newPost = new Post({
+    const pictureUrl = cloudinaryImage
+      ? await getImageUrl(req, cloudinaryImage.public_id)
+      : null;
+
+    const newPost = new Post({
       userId,
       firstName: user.firstName,
       lastName: user.lastName,
       location: user.location,
       description,
       userPicturePath: await getImageUrl(req, user.picturePath),
-      picturePath: pictureUrl, // local or cached Cloudinary
+      picturePath: pictureUrl,
       likes: {},
       comments: [],
     });
 
     await newPost.save();
-
-    // ✅ Trigger async Cloudinary upload (non-blocking)
-    if (pictureFilename) {
-      const localPath = path.join("public/assets", pictureFilename);
-
-      (async () => {
-        try {
-          const uploadResult = await cloudinary.uploader.upload(localPath, {
-            folder: "social_app/posts",
-            resource_type: "image",
-          });
-
-          // ✅ Update Redis cache
-          await req.redisClient.setEx(
-            `image:${pictureFilename}`,
-            24 * 60 * 60,
-            JSON.stringify(uploadResult.secure_url)
-          );
-
-          // ✅ Update DB with Cloudinary URL
-          await Post.findByIdAndUpdate(newPost._id, {
-            picturePath: uploadResult.secure_url,
-            picturePublicId: uploadResult.public_id,
-          });
-
-          // ✅ Notify frontend via socket (optional)
-          req.io.emit("postImageUpdated", {
-            postId: newPost._id,
-            cloudUrl: uploadResult.secure_url,
-          });
-
-          console.log(
-            "✅ Cloudinary upload successful:",
-            uploadResult.secure_url
-          );
-        } catch (cloudErr) {
-          console.error("❌ Cloudinary upload failed:", cloudErr.message);
-        }
-      })();
-    }
 
     const posts = await Post.find().sort({ createdAt: -1 });
     res.status(201).json(posts);
@@ -77,7 +40,6 @@ export const createPost = async (req, res) => {
   }
 };
 
-/* -------------------- DELETE POST -------------------- */
 export const deletePost = async (req, res) => {
   try {
     const { id } = req.params;
@@ -130,7 +92,6 @@ export const deletePost = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-
 
 /* -------------------- GET FEED POSTS -------------------- */
 export const getFeedPosts = async (req, res) => {

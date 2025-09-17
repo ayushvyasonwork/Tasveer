@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import { getImageUrl } from "../utils/getImageUrl.js";
 
 /* REGISTER USER */
 /* REGISTER USER */
@@ -21,14 +22,18 @@ export const register = async (req, res) => {
     const passwordHash = await bcrypt.hash(password, salt);
 
     // ✅ Multer stores file as req.file
-    const picturePath = req.file ? req.file.filename : "";
+       const cloudinaryImage = req.cloudinaryImage;
+   
+       const pictureUrl = cloudinaryImage
+         ? await getImageUrl(req, cloudinaryImage.public_id)
+         : null;
 
     const newUser = new User({
       firstName,
       lastName,
       email,
       password: passwordHash,
-      picturePath, // local filename or later replace with cloudinary URL
+      picturePath:pictureUrl, // local filename or later replace with cloudinary URL
       friends: [],
       location,
       occupation,

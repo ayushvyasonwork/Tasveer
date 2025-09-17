@@ -15,6 +15,7 @@ const router = express.Router();
 
 /* READ */
 router.get("/", verifyToken, getFeedPosts);                  // /posts/
+// router.post("/", verifyToken, createPost);                  // /posts/
 router.get("/:userId/posts", verifyToken, getUserPosts);     // /posts/:userId/posts
 router.get("/:id/comments", verifyToken, getComments);       // /posts/:id/comments
 /* CREATE (comment only; post is handled in server.js) */

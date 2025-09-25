@@ -13,7 +13,7 @@ const LoginPage = () => {
         textAlign="center"
       >
         <Typography fontWeight="bold" fontSize="32px" color="primary">
-          Snapsy
+          Tasveer
         </Typography>
       </Box>
 
@@ -25,7 +25,7 @@ const LoginPage = () => {
         backgroundColor={theme.palette.background.alt}
       >
         <Typography fontWeight="500" variant="h5" sx={{ mb: "1.5rem" }}>
-          Welcome to Snapsy, interact here with them!
+          Welcome to Tasveer, interact here with them!
         </Typography>
         <Form />
       </Box>

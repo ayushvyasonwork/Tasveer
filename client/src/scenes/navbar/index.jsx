@@ -65,7 +65,7 @@ const Navbar = () => {
             onClick={() => navigate("/home")}
             sx={{ "&:hover": { color: primaryLight, cursor: "pointer" } }}
           >
-            Snapsy
+            Tasveer
           </Typography>
           {isNonMobileScreens && (
             <FlexBetween

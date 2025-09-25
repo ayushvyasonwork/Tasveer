@@ -19,18 +19,12 @@ const PostsWidget = ({ userId, isProfile = false }) => {
       console.error("Failed to fetch posts, status code:", response ? response.status : "No response");
       return;
     }
-    const data = response.data; // ✅ axios stores data here
-    if(!data || !data.posts) {
-      console.log("No posts data received");
-      return;
-    }
-    console.log("data in posts is", data);
-    dispatch(setPosts({ posts: data.posts }));
+    const data = response.data; // ✅ axios stores data 
+    dispatch(setPosts({ posts: data }));
   } catch (error) {
     console.error("Error fetching posts:", error);
   }
 };
-
 const getUserPosts = async () => {
   try {
     const response = await api.get(`/posts/${userId}/posts`);

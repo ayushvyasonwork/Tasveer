@@ -146,16 +146,35 @@ const PostWidget = ({
       <Typography color={main} sx={{ mt: "1rem" }}>
         {description}
       </Typography>
-      {picturePath && (
-        <img
-          width="100%"
-          height="auto"
-          alt="post"
-          style={{ borderRadius: "0.75rem", marginTop: "0.75rem" }}
-          // src={`${process.env.REACT_APP_API_BASE_URL}/assets/${picturePath}`}
-          src={`${picturePath}`}
-        />
-      )}
+     {picturePath && (
+  <Box
+    sx={{
+      width: "100%",  // Full width of the parent container
+      height: "auto", // Auto height based on image's aspect ratio
+      maxHeight: "400px", // Set a max height for the image (adjust as needed)
+      backgroundColor: "black", // Black background when image is smaller
+      display: "flex", 
+      justifyContent: "center", // Centers the image horizontally
+      alignItems: "center", // Centers the image vertically
+      overflow: "hidden", // Ensures no overflow of image
+      borderRadius: "0.75rem", // Matches the border-radius of the parent container (WidgetWrapper)
+      border: `1px solid ${palette.neutral.medium}`, // Border parallel to the parent widget
+    }}
+  >
+    <img
+      src={`${picturePath}`}
+      alt="post"
+      style={{
+        maxWidth: "100%",
+        maxHeight: "100%",
+        objectFit: "contain", // Ensures the image fits the container without being cut
+        objectPosition: "center", // Keeps the image centered
+      }}
+    />
+  </Box>
+)}
+
+
 
       {/* Like, Comment & Delete */}
       <FlexBetween mt="0.25rem">

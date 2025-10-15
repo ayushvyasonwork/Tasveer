@@ -58,6 +58,7 @@ return (
       userPicturePath,
       likes,
       comments,
+      isAIGenerated,
     }) => (
       <PostWidget
         key={_id}
@@ -72,6 +73,7 @@ return (
         comments={comments}
         getPosts={getPosts}
         getUserPosts={getUserPosts}
+        isAIGenerated={isAIGenerated}
       />
     ))}
   </>

@@ -19,6 +19,7 @@ import {
   DialogContentText,
   DialogTitle,
   CircularProgress,
+  Chip,
 } from "@mui/material";
 import FlexBetween from "components/FlexBetween";
 import Friend from "components/Friend";
@@ -40,6 +41,7 @@ const PostWidget = ({
   comments,
   getPosts,
   getUserPosts,
+  isAIGenerated=false,
 }) => {
   const [isComments, setIsComments] = useState(false);
   const [commentsList, setCommentsList] = useState([]);
@@ -59,6 +61,7 @@ const PostWidget = ({
   console.log('user picture path is ',userPicturePath);
   console.log('picture path is ',picturePath);
   // Handle Like
+  console.log(`isAIGenerated in post widget is ${description}`,isAIGenerated);
   const patchLike = async () => {
     try {
       const response = await api.patch(`/posts/${postId}/like`, {
@@ -146,33 +149,53 @@ const PostWidget = ({
       <Typography color={main} sx={{ mt: "1rem" }}>
         {description}
       </Typography>
-     {picturePath && (
-  <Box
-    sx={{
-      width: "100%",  // Full width of the parent container
-      height: "auto", // Auto height based on image's aspect ratio
-      maxHeight: "400px", // Set a max height for the image (adjust as needed)
-      backgroundColor: "black", // Black background when image is smaller
-      display: "flex", 
-      justifyContent: "center", // Centers the image horizontally
-      alignItems: "center", // Centers the image vertically
-      overflow: "hidden", // Ensures no overflow of image
-      borderRadius: "0.75rem", // Matches the border-radius of the parent container (WidgetWrapper)
-      border: `1px solid ${palette.neutral.medium}`, // Border parallel to the parent widget
-    }}
-  >
-    <img
-      src={`${picturePath}`}
-      alt="post"
-      style={{
-        maxWidth: "100%",
-        maxHeight: "100%",
-        objectFit: "contain", // Ensures the image fits the container without being cut
-        objectPosition: "center", // Keeps the image centered
-      }}
-    />
-  </Box>
-)}
+ {picturePath && (
+        <Box
+          position="relative" // Parent container must be relative for absolute positioning
+          mt="0.75rem"
+        >
+          {isAIGenerated && (
+            <Chip
+              label="AI Generated"
+              color="warning"
+              size="small"
+              sx={{
+                position: "absolute",
+                top: 8,
+                right: 8,
+                zIndex: 1, // Ensures tag is on top of the image
+                opacity: 0.9,
+              }}
+            />
+          )}
+
+          <Box
+            sx={{
+              width: "100%",
+              height: "auto",
+              maxHeight: "400px",
+              backgroundColor: "black",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              overflow: "hidden",
+              borderRadius: "0.75rem",
+              border: `1px solid ${palette.neutral.medium}`,
+            }}
+          >
+            <img
+              src={`${picturePath}`}
+              alt="post"
+              style={{
+                maxWidth: "100%",
+                maxHeight: "100%",
+                objectFit: "contain",
+                objectPosition: "center",
+              }}
+            />
+          </Box>
+        </Box>
+      )}
 
 
 

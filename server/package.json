@@ -20,6 +20,7 @@
     "nodemon": "^3.1.9",
     "redis": "^5.6.1",
     "socket.io": "^4.8.1",
+    "streamifier": "^0.1.1",
     "youtube-sr": "^4.3.12"
   },
   "scripts": {

@@ -23,13 +23,16 @@ const postSchema = mongoose.Schema(
       of: Boolean,
     },
     comments: [
-  {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    text: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now },
-  },
-],
-
+      {
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        text: { type: String, required: true },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+    isAIGenerated: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );

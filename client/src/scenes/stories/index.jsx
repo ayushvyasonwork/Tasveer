@@ -13,11 +13,16 @@ import {
 import { useSelector } from 'react-redux';
 import Dropzone from 'react-dropzone';
 import CloseIcon from '@mui/icons-material/Close';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PauseIcon from '@mui/icons-material/Pause';
+import MusicOffIcon from '@mui/icons-material/MusicOff';
 import Navbar from 'scenes/navbar';
 import api from '../../axiosInstance';
 import socket from '../../socket';
 import { Chart } from 'chart.js/auto';
 import YouTube from 'react-youtube';
+import { ToastContainer, toast } from 'react-toastify'; // 👈 Import toast
+import 'react-toastify/dist/ReactToastify.css'; // 👈 Import toast css
 
 // --- Re-integrated MoodChart Component (Now Theme-Aware) ---
 const MoodChart = ({ analysis }) => {
@@ -97,6 +102,13 @@ const StoriesPage = () => {
   const [error, setError] = useState(null);
   const [selectedSong, setSelectedSong] = useState(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
+
+  // --- State for music preview ---
+  const [previewSongData, setPreviewSongData] = useState(null);
+  const [isPreviewPlaying, setIsPreviewPlaying] = useState(false);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const previewPlayerRef = useRef(null);
+  // --- End music preview state ---
 
   const user = useSelector((state) => state.user);
   const { palette } = useTheme();
@@ -187,8 +199,8 @@ const StoriesPage = () => {
         - Danceability: ${danceabilityNum.toFixed(2)}
 
         Based on this profile, perform two tasks and return the result as a single JSON object.
-        1.  **moodMatches**: Generate a JSON array of 10 songs that perfectly match this mood. Include a mix of popular Hindi and global English songs. For each song, provide 'song_name', 'artist', and a 'similarity' score from 0.0 to 1.0.
-        2.  **communityPicks**: Generate a second JSON array of 5 songs that are popularly associated with this vibe, as if simulating community trends. For each song, provide 'song_name', 'artist', and a 'picks' count (a number between 10 and 500).
+        1.  **moodMatches**: Generate a JSON array of 10 songs that perfectly match this mood. Include a mix of popular Hindi and global English songs. For each song, provide 'song_name', 'artist', 'similarity' (score from 0.0 to 1.0), and 'youtubeVideoId' (the YouTube video ID string).
+        2.  **communityPicks**: Generate a second JSON array of 5 songs that are popularly associated with this vibe, as if simulating community trends. For each song, provide 'song_name', 'artist', 'picks' (count between 10-500), and 'youtubeVideoId' (the YouTube video ID string).
 
         Return ONLY the final JSON object with the keys "moodMatches" and "communityPicks". Do not include any other text.
     `;
@@ -227,6 +239,7 @@ const StoriesPage = () => {
     setError(null);
     setResults(null);
     setSelectedSong(null);
+    handleStopPreview(); // Stop any previous preview
     try {
       const base64 = await convertToBase64(image);
       const mood = await analyzeImageWithGemini(base64);
@@ -256,6 +269,7 @@ const StoriesPage = () => {
     setActiveTab('mood');
     setError(null);
     setSelectedSong(null);
+    handleStopPreview(); // Stop preview on reset
   };
 
   const handleImageDrop = (files) => {
@@ -266,11 +280,13 @@ const StoriesPage = () => {
     setResults(null);
     setError(null);
     setSelectedSong(null);
+    handleStopPreview(); // Stop preview on new image
   };
 
   const uploadStory = async () => {
     if (!image || !user?._id) return;
     setUploading(true);
+    handleStopPreview(); // Stop preview on upload
     try {
       const formData = new FormData();
       formData.append('userId', user._id);
@@ -297,8 +313,138 @@ const StoriesPage = () => {
     setSelectedStory(story);
   };
 
+  // --- Helper functions for preview and selection ---
+
+  const handleTogglePlay = (song) => {
+    if (!previewPlayerRef.current || !song.youtubeVideoId) {
+       console.error("Preview player not ready or no video ID");
+       return;
+    }
+    
+    const isThisSongLoaded = previewSongData?.song_name === song.song_name;
+
+    if (isThisSongLoaded && isPreviewPlaying) {
+      // It's this song and it's playing, so pause
+      previewPlayerRef.current.pauseVideo();
+    } else if (isThisSongLoaded && !isPreviewPlaying) {
+      // It's this song and it's paused, so play
+      previewPlayerRef.current.playVideo();
+    } else {
+      // It's a new song
+      setIsPreviewLoading(true);
+      setPreviewSongData(song);
+      previewPlayerRef.current.loadVideoById(song.youtubeVideoId);
+    }
+  };
+
+  const handleStopPreview = () => {
+    if (previewPlayerRef.current && typeof previewPlayerRef.current.stopVideo === 'function') {
+      previewPlayerRef.current.stopVideo();
+    }
+    setPreviewSongData(null);
+    setIsPreviewPlaying(false);
+    setIsPreviewLoading(false);
+  };
+
+  const handleSelectSong = (song) => {
+    if (selectedSong?.song_name === song.song_name) {
+      setSelectedSong(null); // Toggle off (Clear)
+    } else {
+      setSelectedSong(song); // Select
+    }
+  };
+  // --- End helper functions ---
+
+
+  // --- Helper component for rendering song items ---
+  const SongItem = ({ song, idx, metricLabel, metricValue }) => {
+    const isThisSongLoading = previewSongData?.song_name === song.song_name && isPreviewLoading;
+    const isThisSongPreviewing = previewSongData?.song_name === song.song_name && isPreviewPlaying;
+    const isThisSongSelected = selectedSong?.song_name === song.song_name;
+
+    return (
+      <Box
+        key={`${song.song_name}-${idx}`}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          mt: 1,
+          p: 0.5,
+          borderRadius: 1.5,
+          border: `1px solid ${isThisSongSelected ? palette.primary.main : palette.divider}`,
+          bgcolor: isThisSongSelected ? palette.action.selected : 'transparent',
+          transition: 'background-color 0.2s, border-color 0.2s',
+        }}
+      >
+        <IconButton
+          onClick={() => handleTogglePlay(song)}
+          disabled={!song.youtubeVideoId || (isPreviewLoading && !isThisSongLoading)} // Disable other buttons while one is loading
+          color="primary"
+          size="small"
+          title={song.youtubeVideoId ? (isThisSongPreviewing ? "Pause" : "Play") : "Preview not available"}
+        >
+          {isThisSongLoading ? (
+            <CircularProgress size={20} color="primary" />
+          ) : isThisSongPreviewing ? (
+            <PauseIcon />
+          ) : (
+            <PlayArrowIcon />
+          )}
+        </IconButton>
+        
+        <Box 
+          onClick={() => handleSelectSong(song)}
+          sx={{ flexGrow: 1, cursor: 'pointer', p: '6px 8px', borderRadius: 1 }}
+          title={isThisSongSelected ? "Click to deselect" : "Click to select"}
+        >
+          <Typography 
+            variant="body2" 
+            fontWeight={isThisSongSelected ? 600 : 500}
+            color={isThisSongSelected ? palette.primary.main : 'text.primary'}
+          >
+            {song.song_name}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" noWrap>
+            {song.artist}
+          </Typography>
+        </Box>
+        
+        <Typography
+          variant="body2"
+          sx={{ 
+            pr: 1.5, 
+            pl: 1, 
+            color: 'text.secondary', 
+            minWidth: '60px', 
+            textAlign: 'right',
+            flexShrink: 0,
+          }}
+          title={metricLabel}
+        >
+          {metricValue}
+        </Typography>
+      </Box>
+    );
+  };
+  // --- End Helper component ---
+
+
   return (
     <Box>
+      {/* 👈 Add ToastContainer here, ideally near the root */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme={palette.mode === 'dark' ? 'dark' : 'light'}
+      />
       <Navbar />
 
       {/* Upload Section */}
@@ -385,7 +531,22 @@ const StoriesPage = () => {
               bgcolor: palette.background.paper,
             }}
           >
-            <Typography variant="h6" textAlign="center" mb={1}>AI Suggestions</Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', mb: 1 }}>
+              <Typography variant="h6" textAlign="center">AI Suggestions</Typography>
+              {previewSongData && (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  size="small"
+                  startIcon={<MusicOffIcon />}
+                  onClick={handleStopPreview}
+                  sx={{ position: 'absolute', right: 0, textTransform: 'none' }}
+                >
+                  Stop Preview
+                </Button>
+              )}
+            </Box>
+
             <Tabs
               value={activeTab}
               onChange={(e, newValue) => setActiveTab(newValue)}
@@ -401,16 +562,13 @@ const StoriesPage = () => {
               <Box mt={2}>
                 <MoodChart analysis={results.imageVector} />
                 {results.moodMatches.map((song, idx) => (
-                  <Button
-                    key={`${song.song_name}-${idx}`}
-                    fullWidth
-                    variant={selectedSong?.song_name === song.song_name ? "contained" : "outlined"}
-                    onClick={() => setSelectedSong(song)}
-                    sx={{ mt: 1, justifyContent: 'space-between', textTransform: 'none' }}
-                  >
-                    <span>🎵 {song.song_name} - {song.artist}</span>
-                    <span>{(song.similarity * 100).toFixed(0)}%</span>
-                  </Button>
+                  <SongItem
+                    key={`mood-${idx}`}
+                    song={song}
+                    idx={idx}
+                    metricLabel="Mood Match"
+                    metricValue={`${(song.similarity * 100).toFixed(0)}%`}
+                  />
                 ))}
               </Box>
             )}
@@ -418,16 +576,13 @@ const StoriesPage = () => {
             {activeTab === 'community' && (
               <Box mt={2}>
                  {results.communityPicks.map((song, idx) => (
-                  <Button
-                    key={`${song.song_name}-${idx}`}
-                    fullWidth
-                    variant={selectedSong?.song_name === song.song_name ? "contained" : "outlined"}
-                    onClick={() => setSelectedSong(song)}
-                    sx={{ mt: 1, justifyContent: 'space-between', textTransform: 'none' }}
-                  >
-                    <span>🎵 {song.song_name} - {song.artist}</span>
-                    <span>{song.picks} picks</span>
-                  </Button>
+                  <SongItem
+                    key={`comm-${idx}`}
+                    song={song}
+                    idx={idx}
+                    metricLabel="Community Picks"
+                    metricValue={`${song.picks} picks`}
+                  />
                 ))}
               </Box>
             )}
@@ -463,16 +618,16 @@ const StoriesPage = () => {
                 />
                 {story.userId && (
                     <Avatar
-                        src={`${process.env.REACT_APP_API_BASE_URL}${story.userId.picturePath}`}
-                        alt={story.userId.firstName}
-                        sx={{
-                            position: 'absolute',
-                            top: 8,
-                            left: 8,
-                            width: 32,
-                            height: 32,
-                            border: '2px solid white',
-                        }}
+                      src={`${process.env.REACT_APP_API_BASE_URL}${story.userId.picturePath}`}
+                      alt={story.userId.firstName}
+                      sx={{
+                        position: 'absolute',
+                        top: 8,
+                        left: 8,
+                        width: 32,
+                        height: 32,
+                        border: '2px solid white',
+                      }}
                     />
                 )}
               </Box>
@@ -575,7 +730,7 @@ const StoriesPage = () => {
                   }}
                 >
                   {!isPlayerReady && selectedStory.song.youtubeVideoId ? (
-                     <CircularProgress size={16} sx={{ mr: 1 }} />
+                       <CircularProgress size={16} sx={{ mr: 1 }} />
                   ) : (
                     <Typography variant="h6" component="span" sx={{ color: 'text.secondary' }}>🎵</Typography>
                   )}
@@ -613,6 +768,35 @@ const StoriesPage = () => {
           </Box>
         </Box>
       )}
+
+      {/* Hidden YouTube player for song previews */}
+      <YouTube
+        opts={{ height: '0', width: '0', playerVars: { autoplay: 1 } }}
+        onReady={(e) => {
+          previewPlayerRef.current = e.target;
+        }}
+        onStateChange={(e) => {
+          if (e.data === 1) { // Playing
+            setIsPreviewPlaying(true);
+            setIsPreviewLoading(false);
+          } else if (e.data === 2 || e.data === 0 || e.data === -1) { // Paused, Ended, Unstarted
+              setIsPreviewPlaying(false);
+              setIsPreviewLoading(false);
+              if (e.data === 0) setPreviewSongData(null); // Clear when ended
+          } else if (e.data === 3) { // Buffering
+            setIsPreviewPlaying(false);
+            setIsPreviewLoading(true);
+          }
+        }}
+        onError={(e) => {
+          console.error("YouTube Player Error:", e);
+          toast.error("Could not play song preview."); // 👈 Changed from setError
+          setPreviewSongData(null);
+          setIsPreviewPlaying(false);
+          setIsPreviewLoading(false);
+        }}
+        style={{ display: 'none' }}
+      />
     </Box>
   );
 };

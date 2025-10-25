@@ -56,8 +56,8 @@ const initialValuesRegister = {
 };
 
 const initialValuesLogin = {
-  email: "",
-  password: "",
+  email: "j@gmail.com",
+  password: "123",
 };
 
 const Form = () => {

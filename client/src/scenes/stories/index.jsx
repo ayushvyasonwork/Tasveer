@@ -21,14 +21,14 @@ import api from '../../axiosInstance';
 import socket from '../../socket';
 import { Chart } from 'chart.js/auto';
 import YouTube from 'react-youtube';
-import { ToastContainer, toast } from 'react-toastify'; // 👈 Import toast
-import 'react-toastify/dist/ReactToastify.css'; // 👈 Import toast css
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // --- Re-integrated MoodChart Component (Now Theme-Aware) ---
 const MoodChart = ({ analysis }) => {
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
-  const theme = useTheme(); // Access theme at the top level
+  const theme = useTheme();
 
   useEffect(() => {
     if (!analysis || !chartRef.current) return;
@@ -46,7 +46,7 @@ const MoodChart = ({ analysis }) => {
           label: 'Image Mood',
           data: [analysis.valence, analysis.energy, analysis.danceability],
           fill: true,
-          backgroundColor: theme.palette.primary.light + '33', // Use theme color with alpha
+          backgroundColor: theme.palette.primary.light + '33',
           borderColor: theme.palette.primary.main,
           pointBackgroundColor: theme.palette.primary.main,
           pointBorderColor: theme.palette.background.alt,
@@ -108,11 +108,14 @@ const StoriesPage = () => {
   const [isPreviewPlaying, setIsPreviewPlaying] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const previewPlayerRef = useRef(null);
+  const userInitiatedRef = useRef(false); // mark when a preview mount was triggered by user click
+  const attemptedFallbackRef = useRef(false); // one-time fallback tracker per preview
   // --- End music preview state ---
 
   const user = useSelector((state) => state.user);
   const { palette } = useTheme();
   const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
+  const YT_API_KEY = process.env.REACT_APP_YOUTUBE_API_KEY || ''; // YouTube Data API key
 
   useEffect(() => {
     fetchStories();
@@ -125,6 +128,11 @@ const StoriesPage = () => {
     return () => {
         socket.off('newStory');
         socket.off('storyExpired');
+        // cleanup preview player if component unmounts
+        if (previewPlayerRef.current && typeof previewPlayerRef.current.destroy === 'function') {
+          try { previewPlayerRef.current.destroy(); } catch (e) {}
+        }
+        previewPlayerRef.current = null;
     }
   }, []);
 
@@ -145,6 +153,50 @@ const StoriesPage = () => {
       reader.readAsDataURL(file);
     });
   };
+
+  // ----------------- YouTube helpers -----------------
+  // Search YouTube for an embeddable videoId (requires REACT_APP_YOUTUBE_API_KEY)
+  async function findEmbeddableYoutubeId(query) {
+    if (!YT_API_KEY) return null;
+    try {
+      const params = new URLSearchParams({
+        key: YT_API_KEY,
+        part: 'snippet',
+        type: 'video',
+        maxResults: '5',
+        videoEmbeddable: 'true',
+        q: query,
+      });
+      const res = await fetch(`https://www.googleapis.com/youtube/v3/search?${params.toString()}`);
+      if (!res.ok) throw new Error(`YT Search failed ${res.status}`);
+      const json = await res.json();
+      const item = json.items?.[0];
+      return item?.id?.videoId || null;
+    } catch (e) {
+      console.warn('findEmbeddableYoutubeId error:', e);
+      return null;
+    }
+  }
+
+  // Ensure a song object has an embeddable youtubeVideoId; overwrite if requested
+  async function ensureEmbeddableIdForSong(song, { overwrite = false } = {}) {
+    if (!song) return song;
+    // If we already have an id and not overwriting, just return
+    if (song.youtubeVideoId && !overwrite) return song;
+
+    // Build a query likely to return an embeddable upload (audio/official audio/lyrics)
+    const q = `${song.song_name} ${song.artist} audio`;
+    const vid = await findEmbeddableYoutubeId(q);
+    if (vid) return { ...song, youtubeVideoId: vid };
+    // fallback: try without 'audio'
+    if (YT_API_KEY) {
+      const vid2 = await findEmbeddableYoutubeId(`${song.song_name} ${song.artist}`);
+      if (vid2) return { ...song, youtubeVideoId: vid2 };
+    }
+    // else return original
+    return song;
+  }
+  // ---------------------------------------------------
 
   const analyzeImageWithGemini = async (base64ImageData) => {
     const prompt = `Analyze the mood, theme, and energy of this image. Based on your analysis, provide ONLY a JSON object with the following keys: 'valence' (a score from 0.0 to 1.0 indicating happiness/positivity), 'energy' (a score from 0.0 to 1.0 for intensity/activity), and 'danceability' (a score from 0.0 to 1.0 for how much it makes you want to move). Do not include any text before or after the JSON object.`;
@@ -239,14 +291,21 @@ const StoriesPage = () => {
     setError(null);
     setResults(null);
     setSelectedSong(null);
-    handleStopPreview(); // Stop any previous preview
+    handleStopPreview();
     try {
       const base64 = await convertToBase64(image);
       const mood = await analyzeImageWithGemini(base64);
       const recommendations = await getSongRecommendations(mood);
-      
-      const moodMatches = (recommendations.moodMatches || []).sort((a, b) => b.similarity - a.similarity);
-      const communityPicks = (recommendations.communityPicks || []).sort((a, b) => b.picks - a.picks);
+
+      // Pre-validate and ensure embeddable IDs for returned songs
+      const rawMoodMatches = (recommendations.moodMatches || []).sort((a, b) => b.similarity - a.similarity);
+      const rawCommunityPicks = (recommendations.communityPicks || []).sort((a, b) => b.picks - a.picks);
+
+      // If you have a YT API key, attempt to replace non-embeddable IDs with embeddable alternatives.
+      const [moodMatches, communityPicks] = await Promise.all([
+        Promise.all(rawMoodMatches.map(s => ensureEmbeddableIdForSong(s, { overwrite: true }))),
+        Promise.all(rawCommunityPicks.map(s => ensureEmbeddableIdForSong(s, { overwrite: true }))),
+      ]);
 
       setResults({
         imageVector: mood,
@@ -269,7 +328,7 @@ const StoriesPage = () => {
     setActiveTab('mood');
     setError(null);
     setSelectedSong(null);
-    handleStopPreview(); // Stop preview on reset
+    handleStopPreview();
   };
 
   const handleImageDrop = (files) => {
@@ -280,13 +339,13 @@ const StoriesPage = () => {
     setResults(null);
     setError(null);
     setSelectedSong(null);
-    handleStopPreview(); // Stop preview on new image
+    handleStopPreview();
   };
 
   const uploadStory = async () => {
     if (!image || !user?._id) return;
     setUploading(true);
-    handleStopPreview(); // Stop preview on upload
+    handleStopPreview();
     try {
       const formData = new FormData();
       formData.append('userId', user._id);
@@ -313,48 +372,58 @@ const StoriesPage = () => {
     setSelectedStory(story);
   };
 
-  // --- Helper functions for preview and selection ---
-
+  // --- UPDATED: toggle play marks user initiated and manages player safely ---
   const handleTogglePlay = (song) => {
-    if (!previewPlayerRef.current || !song.youtubeVideoId) {
-       console.error("Preview player not ready or no video ID");
-       return;
-    }
-    
+    if (isPreviewLoading) return; // prevent spamming while loading
+
     const isThisSongLoaded = previewSongData?.song_name === song.song_name;
 
     if (isThisSongLoaded && isPreviewPlaying) {
-      // It's this song and it's playing, so pause
-      previewPlayerRef.current.pauseVideo();
+      // Pause currently playing preview
+      if (previewPlayerRef.current && typeof previewPlayerRef.current.pauseVideo === 'function') {
+        previewPlayerRef.current.pauseVideo();
+      }
     } else if (isThisSongLoaded && !isPreviewPlaying) {
-      // It's this song and it's paused, so play
-      previewPlayerRef.current.playVideo();
+      // Resume paused preview
+      if (previewPlayerRef.current && typeof previewPlayerRef.current.playVideo === 'function') {
+        previewPlayerRef.current.playVideo();
+      }
     } else {
-      // It's a new song
+      // New song -> mark user-initiated mount and set preview data (this mounts the <YouTube> player)
+      attemptedFallbackRef.current = false;
+      userInitiatedRef.current = true;
       setIsPreviewLoading(true);
       setPreviewSongData(song);
-      previewPlayerRef.current.loadVideoById(song.youtubeVideoId);
     }
   };
 
+  // Updated stop preview: unmount player and clear refs
   const handleStopPreview = () => {
-    if (previewPlayerRef.current && typeof previewPlayerRef.current.stopVideo === 'function') {
-      previewPlayerRef.current.stopVideo();
-    }
     setPreviewSongData(null);
     setIsPreviewPlaying(false);
     setIsPreviewLoading(false);
+    // Try to stop player if present, then clear ref
+    try {
+      if (previewPlayerRef.current && typeof previewPlayerRef.current.stopVideo === 'function') {
+        previewPlayerRef.current.stopVideo();
+      }
+    } catch (e) {
+      // ignore
+    }
+    previewPlayerRef.current = null;
+    userInitiatedRef.current = false;
+    attemptedFallbackRef.current = false;
   };
 
-  const handleSelectSong = (song) => {
-    if (selectedSong?.song_name === song.song_name) {
-      setSelectedSong(null); // Toggle off (Clear)
+  const handleSelectSong = async (song) => {
+    // Ensure selected song has an embeddable id (attempt overwrite)
+    const repaired = await ensureEmbeddableIdForSong(song, { overwrite: true });
+    if (selectedSong?.song_name === repaired.song_name) {
+      setSelectedSong(null);
     } else {
-      setSelectedSong(song); // Select
+      setSelectedSong(repaired);
     }
   };
-  // --- End helper functions ---
-
 
   // --- Helper component for rendering song items ---
   const SongItem = ({ song, idx, metricLabel, metricValue }) => {
@@ -379,7 +448,7 @@ const StoriesPage = () => {
       >
         <IconButton
           onClick={() => handleTogglePlay(song)}
-          disabled={!song.youtubeVideoId || (isPreviewLoading && !isThisSongLoading)} // Disable other buttons while one is loading
+          disabled={!song.youtubeVideoId || (isPreviewLoading && !isThisSongLoading)}
           color="primary"
           size="small"
           title={song.youtubeVideoId ? (isThisSongPreviewing ? "Pause" : "Play") : "Preview not available"}
@@ -429,10 +498,8 @@ const StoriesPage = () => {
   };
   // --- End Helper component ---
 
-
   return (
     <Box>
-      {/* 👈 Add ToastContainer here, ideally near the root */}
       <ToastContainer
         position="top-right"
         autoClose={3000}
@@ -769,34 +836,95 @@ const StoriesPage = () => {
         </Box>
       )}
 
-      {/* Hidden YouTube player for song previews */}
-      <YouTube
-        opts={{ height: '0', width: '0', playerVars: { autoplay: 1 } }}
-        onReady={(e) => {
-          previewPlayerRef.current = e.target;
-        }}
-        onStateChange={(e) => {
-          if (e.data === 1) { // Playing
-            setIsPreviewPlaying(true);
-            setIsPreviewLoading(false);
-          } else if (e.data === 2 || e.data === 0 || e.data === -1) { // Paused, Ended, Unstarted
+      {/* Hidden YouTube player for song previews - Renders ONLY when previewing */}
+      {previewSongData && (
+        <YouTube
+          videoId={previewSongData.youtubeVideoId}
+          opts={{
+            height: '1',
+            width: '1',
+            playerVars: {
+              autoplay: 1,
+              controls: 0,
+              playsinline: 1,
+              modestbranding: 1,
+              rel: 0,
+              origin: window.location?.origin || (window.location && `${window.location.protocol}//${window.location.host}`),
+            },
+          }}
+          // keep it off-screen instead of display:none (display:none can break init/autoplay)
+          style={{ position: 'fixed', left: -9999, top: -9999, visibility: 'hidden' }}
+          onReady={(e) => {
+            previewPlayerRef.current = e.target;
+            // If this mount was triggered by an explicit user action, call playVideo()
+            if (userInitiatedRef.current && typeof e.target.playVideo === 'function') {
+              try {
+                e.target.playVideo();
+              } catch (err) {
+                console.warn('Explicit playVideo() failed:', err);
+              }
+            }
+            userInitiatedRef.current = false;
+          }}
+          onStateChange={(e) => {
+            if (e.data === 1) { // Playing
+              setIsPreviewPlaying(true);
+              setIsPreviewLoading(false);
+            } else if (e.data === 2) { // Paused
               setIsPreviewPlaying(false);
               setIsPreviewLoading(false);
-              if (e.data === 0) setPreviewSongData(null); // Clear when ended
-          } else if (e.data === 3) { // Buffering
+            } else if (e.data === 0) { // Ended
+              setIsPreviewPlaying(false);
+              setIsPreviewLoading(false);
+              setPreviewSongData(null);
+              previewPlayerRef.current = null;
+              attemptedFallbackRef.current = false;
+            } else if (e.data === 3) { // Buffering
+              setIsPreviewPlaying(false);
+              setIsPreviewLoading(true);
+            } else if (e.data === -1) { // Unstarted
+              setIsPreviewPlaying(false);
+            }
+          }}
+          onError={async (e) => {
+            console.error('YouTube Player Error (preview):', e.data);
+            // If embed disabled (101/150), try one fallback to an embeddable ID
+            if ((e.data === 101 || e.data === 150) && previewSongData && !attemptedFallbackRef.current) {
+              attemptedFallbackRef.current = true;
+              toast.info('Trying an embeddable version…');
+
+              try {
+                const repaired = await ensureEmbeddableIdForSong(previewSongData, { overwrite: true });
+                if (repaired.youtubeVideoId && repaired.youtubeVideoId !== previewSongData.youtubeVideoId) {
+                  // swap and remount the player (this triggers onReady again)
+                  setPreviewSongData(repaired);
+                  return; // retrying — avoid cleanup now
+                }
+              } catch (err) {
+                console.warn('Fallback attempt failed:', err);
+              }
+            }
+
+            let msg = 'Could not play song preview.';
+            if (e.data === 101 || e.data === 150) {
+              msg = 'Audio embedding error, but selecting and uploading the story will still work.';
+            } else if (e.data === 2) {
+              msg = 'Invalid video ID or parameters.';
+            }
+            toast.error(msg);
+
+            // cleanup
+            setPreviewSongData(null);
             setIsPreviewPlaying(false);
-            setIsPreviewLoading(true);
-          }
-        }}
-        onError={(e) => {
-          console.error("YouTube Player Error:", e);
-          toast.error("Could not play song preview."); // 👈 Changed from setError
-          setPreviewSongData(null);
-          setIsPreviewPlaying(false);
-          setIsPreviewLoading(false);
-        }}
-        style={{ display: 'none' }}
-      />
+            setIsPreviewLoading(false);
+            previewPlayerRef.current = null;
+            userInitiatedRef.current = false;
+            attemptedFallbackRef.current = false;
+          }}
+        />
+      )}
+      {/* ------------------------------------------------- */}
+
     </Box>
   );
 };

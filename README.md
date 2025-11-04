@@ -4,15 +4,15 @@ Tasveer is a modern social media application designed for sharing moments and th
 
 ## ✨ Key Features
 
--   **Image & Thought Sharing**: Users can post pictures accompanied by their thoughts, creating a personal feed.
--   **Interactive Posts**: Engage with content by liking and commenting on posts in real-time.
--   **Dynamic Stories**: Post temporary stories that disappear after a set time.
-    -   **AI Song Recommendations**: Get AI-powered song suggestions to add to your stories.
--   **Secure Authentication**: Implements token-based authentication (JWT) for secure sessions and uses bcrypt to hash passwords, ensuring user data is protected.
--   **In-App Game**: A classic Snake game is integrated for users to play.
--   **Dual Theme**: Seamlessly switch between a light and dark mode for comfortable viewing.
--   **Real-time Communication**: Utilizes Socket.io for instant updates on likes, comments, and other interactions.
--   **Optimized Performance**: Leverages Redis for caching, ensuring faster fetching and delivery of stories.
+- **Interactive Posts**: Engage with content by liking and commenting on posts in real-time.  
+- **Dynamic Stories**: Post temporary stories that disappear after a set time.  
+- **AI Song Recommendations**: Get AI-powered song suggestions to add to your stories.  
+- **AI Tag Detection**: Automatically identifies **AI-generated images** during uploads using the **Gemini API** and attaches an **“AI Generated”** tag to such posts for transparency.  
+- **Secure Authentication**: Implements token-based authentication (JWT) for secure sessions and uses bcrypt to hash passwords, ensuring user data is protected.  
+- **In-App Game**: A classic Snake game is integrated for users to play.  
+- **Dual Theme**: Seamlessly switch between a light and dark mode for comfortable viewing.  
+- **Real-time Communication**: Utilizes Socket.io for instant updates on likes, comments, and other interactions.  
+- **Optimized Performance**: Leverages Redis for caching, ensuring faster fetching and delivery of stories.  
 
 ## 🛠️ Technologies Used
 

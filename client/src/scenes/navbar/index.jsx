@@ -67,7 +67,7 @@ const Navbar = () => {
           >
             Tasveer
           </Typography>
-          {isNonMobileScreens && (
+          {/* {isNonMobileScreens && (
             <FlexBetween
               backgroundColor={neutralLight}
               borderRadius="9px"
@@ -77,7 +77,7 @@ const Navbar = () => {
               <InputBase placeholder="Search..." />
               <IconButton><Search /></IconButton>
             </FlexBetween>
-          )}
+          )} */}
         </FlexBetween>
 
         {/* RIGHT SIDE */}
@@ -93,9 +93,9 @@ const Navbar = () => {
 
             <VideogameAssetIcon sx={{ fontSize: "25px", cursor: "pointer" }} onClick={() => navigate('/game')} />
             <ScheduleIcon sx={{ fontSize: "25px", cursor: "pointer" }} onClick={() => navigate('/stories')} />
-            <Message sx={{ fontSize: "25px", cursor: "pointer" }} />
-            <Notifications sx={{ fontSize: "25px", cursor: "pointer" }} />
-            <Help sx={{ fontSize: "25px", cursor: "pointer" }} />
+            {/* <Message sx={{ fontSize: "25px", cursor: "pointer" }} /> */}
+            {/* <Notifications sx={{ fontSize: "25px", cursor: "pointer" }} /> */}
+            {/* <Help sx={{ fontSize: "25px", cursor: "pointer" }} /> */}
 
             <FormControl variant="standard" value={fullName}>
   <Select
@@ -152,9 +152,9 @@ const Navbar = () => {
 
           <VideogameAssetIcon sx={{ fontSize: "25px", cursor: "pointer" }} onClick={() => { navigate("/game"); setIsMobileMenuToggled(false); }} />
           <ScheduleIcon sx={{ fontSize: "25px", cursor: "pointer" }} onClick={() => { navigate("/stories"); setIsMobileMenuToggled(false); }} />
-          <Message sx={{ fontSize: "25px", cursor: "pointer" }} />
+          {/* <Message sx={{ fontSize: "25px", cursor: "pointer" }} />
           <Notifications sx={{ fontSize: "25px", cursor: "pointer" }} />
-          <Help sx={{ fontSize: "25px", cursor: "pointer" }} />
+          <Help sx={{ fontSize: "25px", cursor: "pointer" }} /> */}
 
           <FormControl variant="standard" value={fullName}>
             <Select

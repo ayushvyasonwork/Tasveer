@@ -113,19 +113,19 @@ import Navbar from "scenes/navbar";
             });
         }
     
-        onSnakeEats() {
-            let head = this.state.snakeDots[this.state.snakeDots.length - 1];
-            let food = this.state.food;
-            if (head[0] == food[0] && head[1] == food[1]) {
-                this.setState({
-                    food: getRandomFood(),
-                });
-                this.increaseSnake();
-                this.increaseSpeed();
-            }
+    onSnakeEats() {
+        let head = this.state.snakeDots[this.state.snakeDots.length - 1];
+        let food = this.state.food;
+        // Use proximity-based collision detection with tolerance
+        let tolerance = 2;
+        if (Math.abs(head[0] - food[0]) <= tolerance && Math.abs(head[1] - food[1]) <= tolerance) {
+            this.setState({
+                food: getRandomFood(),
+            });
+            this.increaseSnake();
+            this.increaseSpeed();
         }
-    
-        increaseSnake() {
+    }        increaseSnake() {
             let newSnake = [...this.state.snakeDots];
             newSnake.unshift([]);
             this.setState({

@@ -1,0 +1,72 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/tasveer.pem
+          chmod 600 ~/.ssh/tasveer.pem
+          ssh-keyscan -H ec2-13-51-205-95.eu-north-1.compute.amazonaws.com >> ~/.ssh/known_hosts
+
+      - name: Deploy to EC2
+        run: |
+          ssh -i ~/.ssh/tasveer.pem ubuntu@ec2-13-51-205-95.eu-north-1.compute.amazonaws.com << 'EOF'
+            set -e
+            
+            # Navigate to application directory
+            cd ~/tasveer || mkdir -p ~/tasveer && cd ~/tasveer
+            
+            # Pull latest code
+            if [ -d ".git" ]; then
+              git fetch origin
+              git reset --hard origin/master
+            else
+              git clone https://github.com/ayushvyasonwork/Tasveer.git .
+            fi
+            
+            # Create .env file for server
+            cat > server/.env << 'ENVEOF'
+          PORT=${{ secrets.PORT }}
+          MONGO_URL=${{ secrets.MONGO_URL }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          REDIS_URL=redis://redis:6379
+          CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          ENVEOF
+            
+            # Stop existing containers
+            docker-compose down || true
+            
+            # Remove old images to save space
+            docker system prune -af --volumes || true
+            
+            # Build and start containers
+            docker-compose up -d --build
+            
+            # Show running containers
+            docker-compose ps
+            
+            echo "Deployment completed successfully!"
+          EOF
+
+      - name: Verify Deployment
+        run: |
+          ssh -i ~/.ssh/tasveer.pem ubuntu@ec2-13-51-205-95.eu-north-1.compute.amazonaws.com << 'EOF'
+            cd ~/tasveer
+            docker-compose logs --tail=50
+          EOF

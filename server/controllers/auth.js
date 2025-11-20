@@ -44,7 +44,10 @@ export const register = async (req, res) => {
     });
 
     const savedUser = await newUser.save();
-    res.status(201).json(savedUser);
+    const userResponse = savedUser.toObject();
+delete userResponse.password;
+res.status(201).json(userResponse);
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

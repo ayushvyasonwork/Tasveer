@@ -13,8 +13,7 @@ import GameWithNavigate from "components/GameWithNavigate";
 function App() {
   const mode = useSelector((state) => state.mode);
   const theme = useMemo(() => createTheme(themeSettings(mode)), [mode]);
-  const isAuth = Boolean(useSelector((state) => state.user)); // Check user instead of token
-
+  const isAuth = Boolean(useSelector((state) => state.user)); 
   return (
     <div className="app">
       <BrowserRouter>

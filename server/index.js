@@ -31,8 +31,14 @@ const redisClient = createClient({
 });
 redisClient.on('error', (err) => console.log('Redis Client Error', err));
 
+// Connect to Redis with error handling
 (async () => {
-  await redisClient.connect();
+  try {
+    await redisClient.connect();
+    console.log('Redis connected successfully');
+  } catch (err) {
+    console.log('Redis connection failed, continuing without Redis:', err.message);
+  }
 })();
 app.use(express.json());
 app.use(cookieParser()); // Add cookie parser middleware
@@ -62,7 +68,6 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: ["http://localhost:3000",process.env.CLIENT_URL_2,process.env.CLIENT_URL_1], 
-    origin:"*",
     credentials: true,
     methods: ["GET", "POST"],
   },

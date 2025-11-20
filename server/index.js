@@ -40,7 +40,7 @@ app.use(morgan("common"));
 app.use(bodyParser.json({ limit: "30mb", extended: true }));
 app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
 app.use(cors({
-  origin: process.env.CLIENT_URL_1 ||process.env.CLIENT_URL_2 || "http://localhost:3000", // Specific origin for credentials
+  origin: process.env.CLIENT_URL_1 || process.env.CLIENT_URL_2 || "http://localhost:3000", // Specific origin for credentials
   credentials: true, // Enable credentials (cookies)
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -60,7 +60,7 @@ app.post("/posts", verifyToken, uploadWithCheck, createPost);
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL_1 ||process.env.CLIENT_URL_2 || "http://localhost:3000",
+    origin: process.env.CLIENT_URL_1 || process.env.CLIENT_URL_2 || "http://localhost:3000",
     credentials: true,
     methods: ["GET", "POST"],
   },

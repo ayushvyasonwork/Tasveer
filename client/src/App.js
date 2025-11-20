@@ -8,14 +8,12 @@ import { useSelector } from "react-redux";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { createTheme } from "@mui/material/styles";
 import { themeSettings } from "./theme";
-import Game from "components/Game";
 import GameWithNavigate from "components/GameWithNavigate";
-import Navbar from "scenes/navbar";
 
 function App() {
   const mode = useSelector((state) => state.mode);
   const theme = useMemo(() => createTheme(themeSettings(mode)), [mode]);
-  const isAuth = Boolean(useSelector((state) => state.token));
+  const isAuth = Boolean(useSelector((state) => state.user)); // Check user instead of token
 
   return (
     <div className="app">

@@ -1,24 +1,23 @@
 // src/utils/axiosInstance.js
 import axios from "axios";
-import { store } from "./state/store"; 
+
 // Create Axios instance
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL , // Default base URL
+  baseURL: process.env.REACT_APP_API_BASE_URL, // Default base URL
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true, // Enable sending cookies with requests
 });
 
-// Axios request interceptor to add Authorization token from Redux store
-api.interceptors.request.use(
-  (config) => {
-    const token = store.getState().token; // Get token from Redux store directly
-    if (token) {
-      config.headers["Authorization"] = `Bearer ${token}`; // Add the token to the headers
-    }
-    return config;
-  },
+// Axios interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
   (error) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid - redirect to login
+      window.location.href = "/";
+    }
     return Promise.reject(error);
   }
 );

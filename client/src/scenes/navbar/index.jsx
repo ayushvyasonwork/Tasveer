@@ -26,6 +26,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { setMode, setLogout } from "state";
 import { useNavigate } from "react-router-dom";
 import FlexBetween from "components/FlexBetween";
+import api from "axiosInstance";
 
 const Navbar = () => {
   const [isMobileMenuToggled, setIsMobileMenuToggled] = useState(false);
@@ -42,6 +43,18 @@ const Navbar = () => {
   const alt = theme.palette.background.alt;
 
   const fullName = `${user.firstName} ${user.lastName}`;
+
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Clear Redux state and redirect to login
+      dispatch(setLogout());
+      navigate("/");
+    }
+  };
 
   const dropZoneStyle = {
     backgroundColor: theme.palette.mode === 'dark' ? dark : neutralLight,
@@ -110,7 +123,7 @@ const Navbar = () => {
       <Typography>{fullName}</Typography>
     </MenuItem>
     <MenuItem 
-      onClick={() => dispatch(setLogout())} 
+      onClick={handleLogout} 
       sx={{ color: 'black' }}  // Force black text color
     >
       Log Out
@@ -163,7 +176,7 @@ const Navbar = () => {
               input={<InputBase />}
             >
               <MenuItem value={fullName}><Typography>{fullName}</Typography></MenuItem>
-              <MenuItem onClick={() => dispatch(setLogout())}>Log Out</MenuItem>
+              <MenuItem onClick={handleLogout}>Log Out</MenuItem>
             </Select>
           </FormControl>
         </Box>

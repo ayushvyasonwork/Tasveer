@@ -4,7 +4,6 @@ import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 dotenv.config();
-// import multer from "multer";
 import morgan from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -19,7 +18,7 @@ import { Server } from "socket.io";
 import storyRoutes from "./routes/storyRoutes.js"; // Correct import
 import { createClient } from "redis";
 import { uploadWithCheck } from "./middleware/upload.js";
-import { cloudinary } from "./config/cloudinary.js";
+import cookieParser from "cookie-parser";
 
 
 /* CONFIGURATIONS */
@@ -36,11 +35,13 @@ redisClient.on('error', (err) => console.log('Redis Client Error', err));
   await redisClient.connect();
 })();
 app.use(express.json());
+app.use(cookieParser()); // Add cookie parser middleware
 app.use(morgan("common"));
 app.use(bodyParser.json({ limit: "30mb", extended: true }));
 app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
 app.use(cors({
-  origin: "*",
+  origin: process.env.CLIENT_URL || "http://localhost:3000", // Specific origin for credentials
+  credentials: true, // Enable credentials (cookies)
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
@@ -59,7 +60,8 @@ app.post("/posts", verifyToken, uploadWithCheck, createPost);
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*", // Or your specific frontend URL
+    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    credentials: true,
     methods: ["GET", "POST"],
   },
 });

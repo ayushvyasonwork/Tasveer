@@ -104,10 +104,11 @@ const Form = () => {
       onSubmitProps.resetForm();
 
       if (loggedIn) {
+        // Token is now stored in httpOnly cookie, only store user data
         dispatch(
           setLogin({
             user: loggedIn.user,
-            token: loggedIn.token,
+            token: null, // No longer storing token in Redux
           })
         );
         navigate("/home");

@@ -40,12 +40,12 @@ app.use(morgan("common"));
 app.use(bodyParser.json({ limit: "30mb", extended: true }));
 app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
 app.use(cors({
-  // origin: process.env.CLIENT_URL_1 || process.env.CLIENT_URL_2 || "http://localhost:3000", // Specific origin for credentials
-  origin:"*",
-  credentials: true, // Enable credentials (cookies)
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  origin: ["http://localhost:3000",process.env.CLIENT_URL_2,process.env.CLIENT_URL_1],   // allow frontend
+  credentials: true,                  // allow cookies
+  methods: ["GET","POST","PUT","DELETE","PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
+
 app.use((req, res, next) => {
   req.io = io;
   req.redisClient = redisClient;
@@ -61,7 +61,7 @@ app.post("/posts", verifyToken, uploadWithCheck, createPost);
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    // origin: process.env.CLIENT_URL_1 || process.env.CLIENT_URL_2 || "http://localhost:3000",
+    origin: ["http://localhost:3000",process.env.CLIENT_URL_2,process.env.CLIENT_URL_1], 
     origin:"*",
     credentials: true,
     methods: ["GET", "POST"],

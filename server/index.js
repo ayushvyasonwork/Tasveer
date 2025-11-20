@@ -60,7 +60,7 @@ app.post("/posts", verifyToken, uploadWithCheck, createPost);
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: process.env.CLIENT_URL_1 ||process.env.CLIENT_URL_2 || "http://localhost:3000",
     credentials: true,
     methods: ["GET", "POST"],
   },

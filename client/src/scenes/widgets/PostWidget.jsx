@@ -196,9 +196,6 @@ const PostWidget = ({
           </Box>
         </Box>
       )}
-
-
-
       {/* Like, Comment & Delete */}
       <FlexBetween mt="0.25rem">
         <FlexBetween gap="1rem">
@@ -222,10 +219,6 @@ const PostWidget = ({
         </FlexBetween>
 
         <FlexBetween gap="0.5rem">
-          <IconButton>
-            <ShareOutlined />
-          </IconButton>
-
           {loggedInUserId === postUserId && (
             <IconButton onClick={() => setOpen(true)} color="error" variant="outlined"s>
               <Typography color="error" fontSize="0.9rem">

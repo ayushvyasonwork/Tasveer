@@ -99,10 +99,8 @@ const Form = () => {
   const login = async (values, onSubmitProps) => {
     try {
       const response = await api.post("/auth/login", values);
-
       const loggedIn = response.data;
       onSubmitProps.resetForm();
-
       if (loggedIn) {
         // Token is now stored in httpOnly cookie, only store user data
         dispatch(

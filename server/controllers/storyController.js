@@ -18,9 +18,9 @@ export const uploadStory = async (req, res) => {
     }
 
     // --- ✅ Upload image to Cloudinary ---
-        const cloudinaryImage = req.cloudinaryImage;
+    const cloudinaryImage = req.cloudinaryImage;
     
-        const pictureUrl = cloudinaryImage
+    const pictureUrl = cloudinaryImage
           ? await getImageUrl(req, cloudinaryImage.public_id)
           : null;
 
@@ -120,4 +120,3 @@ export const getStories = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-

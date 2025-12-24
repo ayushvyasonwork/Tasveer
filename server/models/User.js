@@ -10,20 +10,17 @@ const UserSchema = new mongoose.Schema(
     friends: { type: Array, default: [] },
     location: String,
     occupation: String,
-    viewedProfile: Number,
-    impressions: Number,
     twitter: {
-  type: String,
-  default: "",
-},
-linkedin: {
-  type: String,
-  default: "",
-},
+      type: String,
+      default: "",
+    },
+    linkedin: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );
-
 
 const User = mongoose.model("User", UserSchema);
 export default User;

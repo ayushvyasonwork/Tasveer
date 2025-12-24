@@ -5,7 +5,6 @@ import { cloudinary } from "../config/cloudinary.js";
 import fs from "fs";
 import path from "path";
 import streamifier from "streamifier";
-import { json } from "stream/consumers";
 
 const detectAIGeneratedImage = async (base64ImageData, mimeType) => {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -13,7 +12,6 @@ const detectAIGeneratedImage = async (base64ImageData, mimeType) => {
     console.warn("⚠️ GEMINI_API_KEY is not set. Skipping AI detection.");
     return false;
   }
-
   // 🧠 Stronger, deterministic prompt
   const prompt = `
 You are an expert digital image analyst.
@@ -34,9 +32,7 @@ You must reply ONLY with a single JSON object like:
 
 Do NOT include explanations or text before/after the JSON.
 `;
-
   const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
   const payload = {
     contents: [
       {
@@ -48,7 +44,6 @@ Do NOT include explanations or text before/after the JSON.
     ],
     generationConfig: { temperature: 0.1, topP: 0.1 }, // more deterministic
   };
-
   try {
     const response = await fetch(apiUrl, {
       method: "POST",
@@ -89,8 +84,6 @@ Do NOT include explanations or text before/after the JSON.
     return false;
   }
 };
-
-
 export const createPost = async (req, res) => {
   try {
     const { userId, description } = req.body;
@@ -198,7 +191,6 @@ export const deletePost = async (req, res) => {
     } catch (redisErr) {
       console.error("Redis cache clear failed:", redisErr.message);
     }
-
     res.send({
       success: true,
       message: "Post deleted everywhere (DB, Redis, Cloudinary, Local)",
@@ -216,20 +208,15 @@ export const getFeedPosts = async (req, res) => {
     if (cached) {
       return res.status(200).json(JSON.parse(cached));
     }
-
     // 2️⃣ Fallback: DB query
     const posts = await Post.find().sort({ createdAt: -1 });
-
     // 3️⃣ Save to Redis (cache for 1 min or so)
     await req.redisClient.setEx("posts", 60, JSON.stringify(posts));
-
     res.status(200).json(posts);
   } catch (err) {
     res.status(404).json({ message: err.message });
   }
 };
-
-
 /* -------------------- GET USER POSTS -------------------- */
 export const getUserPosts = async (req, res) => {
   try {
@@ -254,19 +241,16 @@ export const likePost = async (req, res) => {
     } else {
       post.likes.set(userId, true);
     }
-
     const updatedPost = await Post.findByIdAndUpdate(
       id,
       { likes: post.likes },
       { new: true }
     );
-
     res.status(200).json(updatedPost);
   } catch (err) {
     res.status(404).json({ message: err.message });
   }
 };
-
 /* -------------------- ADD COMMENT -------------------- */
 export const addComment = async (req, res) => {
   try {
@@ -299,12 +283,11 @@ export const addComment = async (req, res) => {
 export const getComments = async (req, res) => {
   try {
     const { id: postId } = req.params;
-
+    
     const post = await Post.findById(postId).populate({
       path: "comments.userId",
       select: "firstName lastName picturePath",
     });
-
     if (!post) return res.status(404).json({ message: "Post not found." });
 
     res.status(200).json(post.comments);

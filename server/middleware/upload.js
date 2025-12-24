@@ -32,7 +32,7 @@ export const uploadWithCheck = (req, res, next) => {
 
     try {
       // Upload to Cloudinary directly from buffer
-      const uploadResult = await cloudinary.uploader.upload_stream(
+      const uploadResult = cloudinary.uploader.upload_stream(
         {
           folder: "social_app",
           resource_type: "image",
@@ -60,7 +60,6 @@ export const uploadWithCheck = (req, res, next) => {
           next();
         }
       );
-
       // Write buffer to stream
       uploadResult.end(req.file.buffer);
     } catch (uploadErr) {

@@ -200,7 +200,7 @@ const StoriesPage = () => {
 
   const analyzeImageWithGemini = async (base64ImageData) => {
     const prompt = `Analyze the mood, theme, and energy of this image. Based on your analysis, provide ONLY a JSON object with the following keys: 'valence' (a score from 0.0 to 1.0 indicating happiness/positivity), 'energy' (a score from 0.0 to 1.0 for intensity/activity), and 'danceability' (a score from 0.0 to 1.0 for how much it makes you want to move). Do not include any text before or after the JSON object.`;
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     const payload = {
       contents: [
@@ -892,7 +892,6 @@ const StoriesPage = () => {
             if ((e.data === 101 || e.data === 150) && previewSongData && !attemptedFallbackRef.current) {
               attemptedFallbackRef.current = true;
               toast.info('Trying an embeddable version…');
-
               try {
                 const repaired = await ensureEmbeddableIdForSong(previewSongData, { overwrite: true });
                 if (repaired.youtubeVideoId && repaired.youtubeVideoId !== previewSongData.youtubeVideoId) {

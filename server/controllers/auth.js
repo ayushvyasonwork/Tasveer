@@ -20,10 +20,8 @@ export const register = async (req, res) => {
 
     const salt = await bcrypt.genSalt();
     const passwordHash = await bcrypt.hash(password, salt);
-
     // ✅ Multer stores file as req.file
        const cloudinaryImage = req.cloudinaryImage;
-   
        const pictureUrl = cloudinaryImage
          ? await getImageUrl(req, cloudinaryImage.public_id)
          : null;
@@ -37,12 +35,9 @@ export const register = async (req, res) => {
       friends: [],
       location,
       occupation,
-      viewedProfile: Math.floor(Math.random() * 10000),
-      impressions: Math.floor(Math.random() * 10000),
       twitter,
       linkedin,
     });
-
     const savedUser = await newUser.save();
     const userResponse = savedUser.toObject();
 delete userResponse.password;
@@ -64,11 +59,9 @@ export const login = async (req, res) => {
     if (!isMatch) return res.status(400).json({ msg: "Invalid credentials. " });
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-    
     // Remove password from user object
     const userObject = user.toObject();
     delete userObject.password;
-    
     // Set cookie with proper options
     res.cookie("token", token, {
       httpOnly: true, // Prevents JavaScript access
@@ -76,7 +69,6 @@ export const login = async (req, res) => {
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // Cross-site in production
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
-    
     res.status(200).json({ user: userObject });
   } catch (err) {
     res.status(500).json({ error: err.message });

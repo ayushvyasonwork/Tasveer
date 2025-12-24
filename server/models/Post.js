@@ -31,7 +31,7 @@ const postSchema = mongoose.Schema(
     ],
     isAIGenerated: {
       type: Boolean,
-      default: true,
+      default: false,
     },
   },
   { timestamps: true }

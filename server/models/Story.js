@@ -15,6 +15,5 @@ const StorySchema = new mongoose.Schema({
     youtubeVideoId: { type: String }
   }
 });
-
 const Story = mongoose.model("Story", StorySchema);
 export default Story;

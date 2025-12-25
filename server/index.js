@@ -45,6 +45,7 @@ app.use(cookieParser());
 app.use(morgan("common"));
 app.use(bodyParser.json({ limit: "30mb", extended: true }));
 app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
+// cors setup
 app.use(cors({
   origin: ["http://localhost:3000",process.env.CLIENT_URL_2,process.env.CLIENT_URL_1],   // allow frontend
   credentials: true,                  // allow cookies
@@ -57,9 +58,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use("/assets", express.static(path.join(__dirname, "public/assets")));
-/* ROUTES WITH FILES */
-app.post("/auth/register", uploadWithCheck, register);
-app.post("/posts", verifyToken, uploadWithCheck, createPost);
+
 /* SOCKET.IO SETUP */
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -82,10 +81,9 @@ app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/posts", postRoutes);
 // Pass the upload middleware to the story routes
-app.use("/stories", storyRoutes(uploadWithCheck));
+app.use("/stories", storyRoutes);
 /* MONGOOSE SETUP */
 const PORT = process.env.PORT || 6001;
 app.get('/', (req, res) => {
   res.send('Server is running');
 });
-

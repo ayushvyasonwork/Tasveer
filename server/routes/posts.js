@@ -10,21 +10,19 @@ import {
 } from "../controllers/posts.js";
 
 import { verifyToken } from "../middleware/auth.js";
+import { uploadWithCheck } from "../middleware/upload.js";
 
 const router = express.Router();
 
+router.post("/", verifyToken, uploadWithCheck, createPost);
 /* READ */
-router.get("/", verifyToken, getFeedPosts);                  // /posts/
-// router.post("/", verifyToken, createPost);                  // /posts/
-router.get("/:userId/posts", verifyToken, getUserPosts);     // /posts/:userId/posts
-router.get("/:id/comments", verifyToken, getComments);       // /posts/:id/comments
-/* CREATE (comment only; post is handled in server.js) */
-router.post("/:id/comment", verifyToken, addComment);        // /posts/:id/comment
-
+router.get("/", verifyToken, getFeedPosts);                  
+router.get("/:userId/posts", verifyToken, getUserPosts);     
+router.get("/:id/comments", verifyToken, getComments);       
+router.post("/:id/comment", verifyToken, addComment);       
 /* UPDATE */
-router.patch("/:id/like", verifyToken, likePost);            // /posts/:id/like
-
+router.patch("/:id/like", verifyToken, likePost);            
 /* DELETE */
-router.delete("/:id", verifyToken, deletePost);              // /posts/:id
+router.delete("/:id", verifyToken, deletePost);             
 
 export default router;

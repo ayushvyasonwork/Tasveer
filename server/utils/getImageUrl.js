@@ -1,4 +1,5 @@
 export const getImageUrl = async (req, publicId) => {
+  console.log("entered get image url");
   if (!publicId) return null;
 
   // 1️⃣ If already a full Cloudinary (or any http/https) URL, return as is

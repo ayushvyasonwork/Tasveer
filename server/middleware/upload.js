@@ -19,6 +19,7 @@ const upload = multer({ storage, fileFilter });
 
 // Middleware → upload to Cloudinary immediately
 export const uploadWithCheck = (req, res, next) => {
+  console.log("entered upload with check middleware");
   const singleUpload = upload.single("picture");
 
   singleUpload(req, res, async (err) => {
@@ -50,13 +51,12 @@ export const uploadWithCheck = (req, res, next) => {
             24 * 60 * 60, // 1 day
             result.secure_url
           );
-
           // Attach Cloudinary info to req
           req.cloudinaryImage = {
             public_id: result.public_id,
             url: result.secure_url,
           };
-          console.log("✅ Image uploaded to Cloudinary:", result.secure_url);
+          console.log("✅ Image uploaded to Cloudinary");
           next();
         }
       );

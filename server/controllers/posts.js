@@ -92,45 +92,27 @@ export const createPost = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
     let isImageAIGenerated = false; 
-    let pictureUrl = null;
-    let picturePublicId = null; 
+    let pictureUrl = req.cloudinaryImage ? req.cloudinaryImage.url : null;
+    let picturePublicId = req.cloudinaryImage ? req.cloudinaryImage.public_id : null; 
     console.log('req.file.mimetype',req.file.mimetype);
+
+
     if (req.file && req.file.buffer) {
-      console.log("✅ File received. Starting AI analysis...");
       const base64Image = req.file.buffer.toString('base64');
-isImageAIGenerated = await detectAIGeneratedImage(base64Image, req.file.mimetype);
-      console.log("AI Detection Result:", isImageAIGenerated);      
-      const uploadPromise = new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: "posts" }, 
-          (error, result) => {
-            if (error) {
-              reject(error);
-            } else {
-              resolve(result);
-            }
-          }
-        );
-        streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
-      });
-      
-      const cloudinaryResult = await uploadPromise;
-      pictureUrl = cloudinaryResult.secure_url;
-      picturePublicId = cloudinaryResult.public_id;
-      console.log("✅ Image uploaded to Cloudinary:", pictureUrl);
+isImageAIGenerated = await detectAIGeneratedImage(base64Image, req.file.mimetype);     
     } else {
       console.log("No file uploaded, skipping AI analysis and Cloudinary upload.");
     }
-    // 5. Create the new post with the correct data
+
     const newPost = new Post({
       userId,
       firstName: user.firstName,
       lastName: user.lastName,
       location: user.location,
       description,
-      userPicturePath: await getImageUrl(req, user.picturePath), // This should probably be user.picturePath
+      userPicturePath: await getImageUrl(req, user.picturePath),
       picturePath: pictureUrl,
-      picturePublicId: picturePublicId, // IMPORTANT: Save this for deletion
+      picturePublicId: picturePublicId, 
       likes: {},
       comments: [],
       isAIGenerated: isImageAIGenerated,
@@ -141,8 +123,8 @@ isImageAIGenerated = await detectAIGeneratedImage(base64Image, req.file.mimetype
     // Invalidate cache and return all posts
     await req.redisClient.del("posts"); 
     const posts = await Post.find().sort({ createdAt: -1 });
+    await req.redisClient.setEx("posts", 60, JSON.stringify(posts));
     res.status(201).json(posts);
-
   } catch (err) {
     console.error("Error in createPost:", err);
     res.status(409).json({ message: err.message });

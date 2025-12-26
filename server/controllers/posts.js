@@ -139,20 +139,18 @@ export const deletePost = async (req, res) => {
       return res.status(404).json({ success: false, message: "Post not found" });
     }
 
-    // 1️⃣ Delete from MongoDB
     await Post.findByIdAndDelete(id);
 
-    // 2️⃣ Delete from Cloudinary if exists
     if (post.picturePublicId) {
       try {
         await cloudinary.uploader.destroy(post.picturePublicId);
-        console.log("✅ Cloudinary image deleted:", post.picturePublicId);
+        console.log("Cloudinary image deleted:", post.picturePublicId);
       } catch (err) {
-        console.error("❌ Cloudinary delete failed:", err.message);
+        console.error("Cloudinary delete failed:", err.message);
       }
     }
 
-    // 3️⃣ Delete from local multer storage
+    // Delete from local multer storage
     if (post.picturePath && post.picturePath.includes("/assets/")) {
       const localFilename = post.picturePath.split("/assets/")[1];
       const localPath = path.join("public/assets", localFilename);
@@ -162,14 +160,14 @@ export const deletePost = async (req, res) => {
       });
     }
 
-    // 4️⃣ Invalidate Redis cache
+    // Invalidate Redis cache
     try {
       await req.redisClient.del("posts");
       await req.redisClient.del("stories");
       if (post.picturePath) {
         await req.redisClient.del(`image:${post.picturePath}`);
       }
-      console.log("✅ Redis cache invalidated for deleted post:", id);
+      console.log(" Redis cache invalidated for deleted post:", id);
     } catch (redisErr) {
       console.error("Redis cache clear failed:", redisErr.message);
     }
@@ -182,7 +180,6 @@ export const deletePost = async (req, res) => {
   }
 };
 
-/* -------------------- GET FEED POSTS -------------------- */
 export const getFeedPosts = async (req, res) => {
   try {
     // 1️⃣ Check Redis cache
@@ -199,7 +196,7 @@ export const getFeedPosts = async (req, res) => {
     res.status(404).json({ message: err.message });
   }
 };
-/* -------------------- GET USER POSTS -------------------- */
+
 export const getUserPosts = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -210,13 +207,11 @@ export const getUserPosts = async (req, res) => {
   }
 };
 
-/* -------------------- LIKE / UNLIKE POST -------------------- */
 export const likePost = async (req, res) => {
   try {
     const { id } = req.params;
     const { userId } = req.body;
     const post = await Post.findById(id);
-
     const isLiked = post.likes.get(userId);
     if (isLiked) {
       post.likes.delete(userId);
@@ -233,7 +228,7 @@ export const likePost = async (req, res) => {
     res.status(404).json({ message: err.message });
   }
 };
-/* -------------------- ADD COMMENT -------------------- */
+
 export const addComment = async (req, res) => {
   try {
     const { id: postId } = req.params;
@@ -261,7 +256,6 @@ export const addComment = async (req, res) => {
   }
 };
 
-/* -------------------- GET COMMENTS -------------------- */
 export const getComments = async (req, res) => {
   try {
     const { id: postId } = req.params;

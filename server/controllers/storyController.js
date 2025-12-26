@@ -9,25 +9,22 @@ export const uploadStory = async (req, res) => {
     console.log("uploadStory called with userId:", userId);
     const { redisClient } = req;
 
-    const user = await User.findById(userId); // Verify user exists
+    const user = await User.findById(userId); 
     if (!user) {
       return res.status(400).json({ error: "User ID required" });
     }
     if (!req.file) {
       return res.status(400).json({ error: "File is required" });
     }
-
-    // --- ✅ Upload image to Cloudinary ---
     const cloudinaryImage = req.cloudinaryImage;
     
-    const pictureUrl = cloudinaryImage
+    const pictureUrl = cloudinaryImage.url || cloudinaryImage
           ? await getImageUrl(req, cloudinaryImage.public_id)
           : null;
 
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const expiresAt = new Date(Date.now() +  60 * 60 * 1000); // 1 hours
     let songData = song ? JSON.parse(song) : undefined;
 
-    // --- Keep YouTube logic same ---
     if (songData && songData.song_name && songData.artist) {
       try {
         const searchQuery = `${songData.song_name} ${songData.artist} official audio`;
@@ -41,7 +38,6 @@ export const uploadStory = async (req, res) => {
       }
     }
 
-    // ✅ Save Cloudinary URL instead of local /assets
     let newStory = new Story({
       userId,
       mediaUrl: pictureUrl,
@@ -72,7 +68,7 @@ export const getStories = async (req, res) => {
   try {
     const { redisClient } = req;
 
-    // 1️⃣ Try Redis cache first
+    //  Try Redis cache first
     const cachedStories = await redisClient.get(STORIES_CACHE_KEY);
     if (cachedStories) {
       console.log("Cache HIT for stories.");
@@ -88,18 +84,16 @@ export const getStories = async (req, res) => {
       .populate("userId", "firstName lastName picturePath")
       .sort({ createdAt: -1 }); // newest first
 
-    // 2️⃣ Resolve mediaUrl via Redis if needed
+    //  Resolve mediaUrl via Redis if needed
     const resolvedStories = [];
     for (const story of stories) {
       let mediaUrl = story.mediaUrl;
 
-      // If it's not already a full URL (http/https), check Redis
       if (mediaUrl && !mediaUrl.startsWith("http")) {
         const cachedUrl = await redisClient.get(`story_image:${mediaUrl}`);
         if (cachedUrl) {
           mediaUrl = cachedUrl;
         } else {
-          // fallback: assume local path
           const baseUrl = `${req.protocol}://${req.get("host")}`;
           mediaUrl = `${baseUrl}/assets/${mediaUrl}`;
         }
@@ -111,9 +105,9 @@ export const getStories = async (req, res) => {
       });
     }
 
-    // 3️⃣ Save to Redis (whole list cached for 60s)
+    // Save to Redis (whole list cached for 60s)
     await redisClient.setEx(STORIES_CACHE_KEY, 60, JSON.stringify(resolvedStories));
-
+    console.log("resolved stories are ", resolvedStories);
     res.status(200).json(resolvedStories);
   } catch (error) {
     console.error("Error in getStories:", error);

@@ -55,7 +55,7 @@ export const register = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 1000 * 60 * 2, // 3 minutes
+      maxAge: 1000 * 60 * 2, // 2 minutes
     });
 
     const userResponse = savedUser.toObject();
@@ -78,14 +78,14 @@ export const login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: "Invalid credentials. " });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "3m" }); 
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "2m" }); 
     const userObject = user.toObject();
     delete userObject.password;
     res.cookie("token", token, {
-      httpOnly: true, // Prevents JavaScript access
+      httpOnly: true, 
       secure: process.env.NODE_ENV === "production", // HTTPS only in production
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // Cross-site in production
-      maxAge: 1000*60*3, // 3 minutes
+      maxAge: 1000*60*2, // 2 minutes
     });
     res.status(200).json({ user: userObject });
   } catch (err) {

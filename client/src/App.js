@@ -3,6 +3,7 @@ import HomePage from "scenes/homePage";
 import LoginPage from "scenes/loginPage";
 import ProfilePage from "scenes/profilePage";
 import StoriesPage from "scenes/stories";
+import ProtectedRoute from "components/ProtectedRoute";
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { CssBaseline, ThemeProvider } from "@mui/material";
@@ -13,29 +14,58 @@ import GameWithNavigate from "components/GameWithNavigate";
 function App() {
   const mode = useSelector((state) => state.mode);
   const theme = useMemo(() => createTheme(themeSettings(mode)), [mode]);
-  const isAuth = Boolean(useSelector((state) => state.user)); 
+  
   return (
     <div className="app">
       <BrowserRouter>
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <Routes>
-            <Route path="/" element={<LoginPage />} />
+            {/* "/" route checks for valid token and either redirects to /home or /auth */}
+            <Route 
+              path="/" 
+              element={
+                <ProtectedRoute>
+                  <Navigate to="/home" replace />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Login/Register page - accessible without authentication */}
+            <Route path="/auth" element={<LoginPage />} />
+            
+            {/* Protected routes - require valid token */}
             <Route
               path="/home"
-              element={isAuth ? <HomePage /> : <Navigate to="/" />}
+              element={
+                <ProtectedRoute>
+                  <HomePage />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/game"
-              element={isAuth ? <GameWithNavigate/> : <Navigate to="/" />}
+              element={
+                <ProtectedRoute>
+                  <GameWithNavigate />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/profile/:userId"
-              element={isAuth ? <ProfilePage /> : <Navigate to="/" />}
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/stories"
-              element={isAuth ? < StoriesPage/> : <Navigate to="/" />}
+              element={
+                <ProtectedRoute>
+                  <StoriesPage />
+                </ProtectedRoute>
+              }
             />
           </Routes>
         </ThemeProvider>

@@ -75,7 +75,7 @@ const Form = () => {
     const formData = new FormData();
     for (let value in values) {
       if (value === "picture") {
-        formData.append("picture", values.picture); // 👈 actual file
+        formData.append("picture", values.picture); 
       } else {
         formData.append(value, values[value]);
       }
@@ -83,16 +83,26 @@ const Form = () => {
 
     try {
       const savedUserResponse = await api.post("/auth/register", formData, {
-        headers: { "Content-Type": "multipart/form-data" }, // 👈 important
+        headers: { "Content-Type": "multipart/form-data" }, 
       });
       const savedUser = savedUserResponse.data;
       onSubmitProps.resetForm();
+      setError(""); // Clear any previous errors
 
       if (savedUser) {
-        setPageType("login");
+        // Token is set in httpOnly cookie, set user in Redux and redirect to home
+        dispatch(
+          setLogin({
+            user: savedUser.user,
+            token: null, // Token is in httpOnly cookie, not needed in Redux
+          })
+        );
+        navigate("/home");
       }
     } catch (error) {
-      console.error("Registration failed:", error?.response?.data || error.message);
+      const errorMessage = error?.response?.data?.msg || error.message;
+      setError(errorMessage);
+      console.error("Registration failed:", errorMessage);
     }
   };
 
@@ -101,6 +111,8 @@ const Form = () => {
       const response = await api.post("/auth/login", values);
       const loggedIn = response.data;
       onSubmitProps.resetForm();
+      setError(""); // Clear any previous errors
+      
       if (loggedIn) {
         // Token is now stored in httpOnly cookie, only store user data
         dispatch(
@@ -112,7 +124,7 @@ const Form = () => {
         navigate("/home");
       }
     } catch (error) {
-      const errorMessage = error?.response?.data || error.message;
+      const errorMessage = error?.response?.data?.msg || error.message;
       setError(errorMessage); // Set the error message to display it on UI
 
       console.error("Login failed:", errorMessage);

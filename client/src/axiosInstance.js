@@ -10,8 +10,10 @@ const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      window.location.href = "/";
+    // Don't globally redirect on 401 for /verify/verify-token endpoint
+    // Let ProtectedRoute handle authentication checks
+    if (error.response?.status === 401 && !error.config.url.includes("/verify/verify-token")) {
+      window.location.href = "/auth";
     }
     return Promise.reject(error);
   }

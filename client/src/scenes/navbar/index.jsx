@@ -50,9 +50,9 @@ const Navbar = () => {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      // Clear Redux state and redirect to login
+      // Clear Redux state and redirect to auth page
       dispatch(setLogout());
-      navigate("/");
+      navigate("/auth");
     }
   };
 

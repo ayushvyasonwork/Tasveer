@@ -10,14 +10,11 @@ import { fileURLToPath } from "url";
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
 import postRoutes from "./routes/posts.js";
-import { register } from "./controllers/auth.js";
-import { createPost } from "./controllers/posts.js";
-import { verifyToken } from "./middleware/auth.js";
+import verifyRoutes from "./routes/verify.js";
 import http from "http";
 import { Server } from "socket.io";
 import storyRoutes from "./routes/storyRoutes.js"; // Correct import
 import { createClient } from "redis";
-import { uploadWithCheck } from "./middleware/upload.js";
 import cookieParser from "cookie-parser";
 
 
@@ -80,6 +77,7 @@ mongoose.connect(process.env.MONGO_URL, {
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/posts", postRoutes);
+app.use("/verify", verifyRoutes);
 // Pass the upload middleware to the story routes
 app.use("/stories", storyRoutes);
 /* MONGOOSE SETUP */

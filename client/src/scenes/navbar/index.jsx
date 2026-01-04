@@ -43,7 +43,9 @@ const Navbar = () => {
   const alt = theme.palette.background.alt;
 
   const fullName = `${user.firstName} ${user.lastName}`;
-
+  if (!user) {
+  return null; // or a minimal navbar / skeleton
+} 
   const handleLogout = async () => {
     try {
       await api.post("/auth/logout");
@@ -106,7 +108,7 @@ const Navbar = () => {
 
             <VideogameAssetIcon sx={{ fontSize: "25px", cursor: "pointer" }} onClick={() => navigate('/game')} />
             <ScheduleIcon sx={{ fontSize: "25px", cursor: "pointer" }} onClick={() => navigate('/stories')} />
-            {/* <Message sx={{ fontSize: "25px", cursor: "pointer" }} /> */}
+            <Message sx={{ fontSize: "25px", cursor: "pointer" }} onClick={() => navigate("/messages")}/>
             {/* <Notifications sx={{ fontSize: "25px", cursor: "pointer" }} /> */}
             {/* <Help sx={{ fontSize: "25px", cursor: "pointer" }} /> */}
 
@@ -165,8 +167,8 @@ const Navbar = () => {
 
           <VideogameAssetIcon sx={{ fontSize: "25px", cursor: "pointer" }} onClick={() => { navigate("/game"); setIsMobileMenuToggled(false); }} />
           <ScheduleIcon sx={{ fontSize: "25px", cursor: "pointer" }} onClick={() => { navigate("/stories"); setIsMobileMenuToggled(false); }} />
-          {/* <Message sx={{ fontSize: "25px", cursor: "pointer" }} />
-          <Notifications sx={{ fontSize: "25px", cursor: "pointer" }} />
+           <Message sx={{ fontSize: "25px", cursor: "pointer" }} onClick={() => navigate("/messages")}/>
+          {/*<Notifications sx={{ fontSize: "25px", cursor: "pointer" }} />
           <Help sx={{ fontSize: "25px", cursor: "pointer" }} /> */}
 
           <FormControl variant="standard" value={fullName}>

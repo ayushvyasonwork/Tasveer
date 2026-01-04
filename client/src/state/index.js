@@ -5,6 +5,10 @@ const initialState = {
   user: null,
   token: null,
   posts: [],
+  posts: [],
+  users: [],
+  conversations: {},
+  activeChatUser: null,
 };
 
 export const authSlice = createSlice({
@@ -40,11 +44,33 @@ export const authSlice = createSlice({
       state.posts = updatedPosts;
     },
     removePost: (state, action) => {
-  state.posts = state.posts.filter((post) => post._id !== action.payload.postId);
-}
+      state.posts = state.posts.filter(
+        (post) => post._id !== action.payload.postId
+      );
+    },
+    setUsers: (state, action) => {
+      state.users = action.payload.users;
+    },
+    setActiveChatUser: (state, action) => {
+      state.activeChatUser = action.payload.user;
+    },
+    setLastMessage: (state, action) => {
+      const { userId, message } = action.payload;
+      state.conversations[userId] = message;
+    },
   },
 });
 
-export const { setMode, setLogin, setLogout, setFriends, setPosts, setPost ,removePost} =
-  authSlice.actions;
+export const {
+  setMode,
+  setLogin,
+  setLogout,
+  setFriends,
+  setPosts,
+  setPost,
+  removePost,
+  setUsers,
+  setActiveChatUser,
+  setLastMessage,
+} = authSlice.actions;
 export default authSlice.reducer;

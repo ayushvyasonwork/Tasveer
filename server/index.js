@@ -16,6 +16,7 @@ import { Server } from "socket.io";
 import storyRoutes from "./routes/storyRoutes.js"; // Correct import
 import { createClient } from "redis";
 import cookieParser from "cookie-parser";
+import { getAllUser } from "./controllers/users.js";
 
 
 /* CONFIGURATIONS */
@@ -60,7 +61,7 @@ app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000",process.env.CLIENT_URL_2,process.env.CLIENT_URL_1], 
+    origin: ["http://localhost:3001",process.env.CLIENT_URL_2,process.env.CLIENT_URL_1], 
     credentials: true,
     methods: ["GET", "POST"],
   },
@@ -78,6 +79,7 @@ app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/posts", postRoutes);
 app.use("/verify", verifyRoutes);
+app.get("/users",getAllUser);
 // Pass the upload middleware to the story routes
 app.use("/stories", storyRoutes);
 /* MONGOOSE SETUP */

@@ -209,7 +209,6 @@ import Navbar from "scenes/navbar";
             const { route, snakeDots, food } = this.state;
             return (
                 <>
-                <Navbar></Navbar>
                 <div>
                   {/* <button onClick={() => this.props.navigate('/home')}>Go Back</button> */}
 

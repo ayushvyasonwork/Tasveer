@@ -16,9 +16,10 @@ import CloseIcon from '@mui/icons-material/Close';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import MusicOffIcon from '@mui/icons-material/MusicOff';
-import Navbar from 'scenes/navbar';
+
 import api from '../../axiosInstance';
-import socket from '../../socket';
+import { getSocket } from '../../socket';
+
 import { Chart } from 'chart.js/auto';
 import YouTube from 'react-youtube';
 import { ToastContainer, toast } from 'react-toastify';
@@ -117,24 +118,31 @@ const StoriesPage = () => {
   const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
   const YT_API_KEY = process.env.REACT_APP_YOUTUBE_API_KEY || ''; // YouTube Data API key
 
-  useEffect(() => {
-    fetchStories();
-    socket.on('newStory', (newStory) => {
-        setStories((prev) => [newStory, ...prev]);
-    });
-    socket.on('storyExpired', (storyId) => {
-      setStories((prev) => prev.filter((s) => s._id !== storyId));
-    });
-    return () => {
-        socket.off('newStory');
-        socket.off('storyExpired');
-        // cleanup preview player if component unmounts
-        if (previewPlayerRef.current && typeof previewPlayerRef.current.destroy === 'function') {
-          try { previewPlayerRef.current.destroy(); } catch (e) {}
-        }
-        previewPlayerRef.current = null;
+useEffect(() => {
+  fetchStories();
+
+  const socket = getSocket(); // ✅ always defined
+
+  socket.on('newStory', (newStory) => {
+    setStories((prev) => [newStory, ...prev]);
+  });
+
+  socket.on('storyExpired', (storyId) => {
+    setStories((prev) => prev.filter((s) => s._id !== storyId));
+  });
+
+  return () => {
+    socket.off('newStory');
+    socket.off('storyExpired');
+
+    // cleanup preview player if component unmounts
+    if (previewPlayerRef.current && typeof previewPlayerRef.current.destroy === 'function') {
+      try { previewPlayerRef.current.destroy(); } catch (e) {}
     }
-  }, []);
+    previewPlayerRef.current = null;
+  };
+}, []);
+
 
   const fetchStories = async () => {
     try {
@@ -512,7 +520,7 @@ const StoriesPage = () => {
         pauseOnHover
         theme={palette.mode === 'dark' ? 'dark' : 'light'}
       />
-      <Navbar />
+
 
       {/* Upload Section */}
       <Box p="1rem" borderBottom={`1px solid ${palette.divider}`} bgcolor={palette.background.alt}>

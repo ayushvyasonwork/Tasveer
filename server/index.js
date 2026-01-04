@@ -61,7 +61,8 @@ app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3001",process.env.CLIENT_URL_2,process.env.CLIENT_URL_1], 
+    // origin: ["http://localhost:3001",process.env.CLIENT_URL_2,process.env.CLIENT_URL_1], 
+    origin:"*",
     credentials: true,
     methods: ["GET", "POST"],
   },

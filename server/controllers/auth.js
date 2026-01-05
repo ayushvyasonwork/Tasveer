@@ -55,7 +55,8 @@ export const register = async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
-        domain: ".onrender.com", // 🔥 REQUIRED
+        domain: ".onrender.com",
+        path: "/", // 🔥 REQUIRED
       maxAge: 1000 * 60 * 10, // 2 minutes
     });
 
@@ -86,8 +87,9 @@ export const login = async (req, res) => {
       httpOnly: true, 
       secure: true, 
       sameSite: 'none', 
-        domain: ".onrender.com", // 🔥 REQUIRED
-      maxAge: 1000*60*10, // 2 minutes
+        domain: ".onrender.com",
+        path: "/", // 🔥 REQUIRED
+      maxAge: 1000*60*10,
     });
     res.status(200).json({ user: userObject });
   } catch (err) {

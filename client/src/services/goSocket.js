@@ -1,9 +1,14 @@
 let ws = null;
 
-export const connectGoSocket = (onMessage) => {
+export const connectGoSocket = async (onMessage) => {
   if (ws) return ws;
 
-  ws = new WebSocket(`${process.env.REACT_APP_API_BASE_URL_2}/ws`);
+    const res = await fetch(
+    `${process.env.REACT_APP_API_BASE_URL_1}/ws-token`,
+    { credentials: "include" }
+  );
+    const { wsToken } = await res.json();
+  ws = new WebSocket(`${process.env.REACT_APP_API_BASE_URL_2}/ws?token=${wsToken}`);
 
   ws.onopen = () => {
     console.log("✅ Go WebSocket connected");

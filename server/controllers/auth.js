@@ -79,7 +79,6 @@ export const login = async (req, res) => {
     if (!user) return res.status(400).json({ msg: "User does not exist. " });
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: "Invalid credentials. " });
-
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "10m" }); 
     const userObject = user.toObject();
     delete userObject.password;
@@ -87,8 +86,8 @@ export const login = async (req, res) => {
       httpOnly: true, 
       secure: process.env.NODE_ENV === "production", // HTTPS only in production
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // Cross-site in production
-        domain: ".ayushvyas.me", // ⭐ shared parent
-  path: "/",
+  //       domain: ".ayushvyas.me", // ⭐ shared parent
+  // path: "/",
       maxAge: 1000*60*10, // 2 minutes
     });
     res.status(200).json({ user: userObject });

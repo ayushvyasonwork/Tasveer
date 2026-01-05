@@ -53,10 +53,8 @@ export const register = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
-        domain: ".onrender.com",
-        path: "/", // 🔥 REQUIRED
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 1000 * 60 * 10, // 2 minutes
     });
 
@@ -85,11 +83,9 @@ export const login = async (req, res) => {
     delete userObject.password;
     res.cookie("token", token, {
       httpOnly: true, 
-      secure: true, 
-      sameSite: 'none', 
-        domain: ".onrender.com",
-        path: "/", // 🔥 REQUIRED
-      maxAge: 1000*60*10,
+      secure: process.env.NODE_ENV === "production", // HTTPS only in production
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // Cross-site in production
+      maxAge: 1000*60*10, // 2 minutes
     });
     res.status(200).json({ user: userObject });
   } catch (err) {

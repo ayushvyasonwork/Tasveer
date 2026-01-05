@@ -55,6 +55,7 @@ export const register = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        domain: ".onrender.com", // 🔥 REQUIRED
       maxAge: 1000 * 60 * 10, // 2 minutes
     });
 
@@ -85,6 +86,7 @@ export const login = async (req, res) => {
       httpOnly: true, 
       secure: process.env.NODE_ENV === "production", // HTTPS only in production
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // Cross-site in production
+        domain: ".onrender.com", // 🔥 REQUIRED
       maxAge: 1000*60*10, // 2 minutes
     });
     res.status(200).json({ user: userObject });

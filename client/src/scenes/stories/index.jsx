@@ -18,7 +18,7 @@ import PauseIcon from '@mui/icons-material/Pause';
 import MusicOffIcon from '@mui/icons-material/MusicOff';
 
 import api from '../../axiosInstance';
-import { getSocket } from '../../socket';
+import { getSocket } from '../../services/socket';
 
 import { Chart } from 'chart.js/auto';
 import YouTube from 'react-youtube';

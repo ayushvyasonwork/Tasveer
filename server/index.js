@@ -14,6 +14,7 @@ import verifyRoutes from "./routes/verify.js";
 import http from "http";
 import { Server } from "socket.io";
 import storyRoutes from "./routes/storyRoutes.js"; // Correct import
+import chatRoutes from "./routes/chat.js";
 import { createClient } from "redis";
 import cookieParser from "cookie-parser";
 import { getAllUser } from "./controllers/users.js";
@@ -81,9 +82,8 @@ app.use("/users", userRoutes);
 app.use("/posts", postRoutes);
 app.use("/verify", verifyRoutes);
 app.get("/users",getAllUser);
-// Pass the upload middleware to the story routes
 app.use("/stories", storyRoutes);
-/* MONGOOSE SETUP */
+app.use("/chat", chatRoutes);
 const PORT = process.env.PORT || 6001;
 app.get('/', (req, res) => {
   res.send('Server is running');

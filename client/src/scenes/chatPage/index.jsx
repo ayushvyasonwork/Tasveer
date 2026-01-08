@@ -13,6 +13,8 @@ import {
   sendGoMessage,
   disconnectGoSocket,
 } from "services/goSocket";
+import api from "axiosInstance";
+
 const getId = (id) => {
   if (!id) return "";
   if (typeof id === "string") return id;
@@ -29,35 +31,54 @@ const ChatPage = () => {
 
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // 📥 FETCH PREVIOUS MESSAGES FROM API
+  useEffect(() => {
+    if (!activeUser) return;
+
+    const fetchMessages = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get(`/chat/${activeUser._id}`);
+        setMessages(response.data);
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMessages();
+  }, [activeUser]);
 
   // 🔌 CONNECT TO GO WS
-useEffect(() => {
-  if (!activeUser) return;
+  useEffect(() => {
+    if (!activeUser) return;
 
-  connectGoSocket((data) => {
-    if (data.type === "system") return;
+    connectGoSocket((data) => {
+      if (data.type === "system") return;
 
-    if (data.type === "ack") {
+      if (data.type === "ack") {
+        dispatch(
+          setLastMessage({
+            userId: data.message.receiverId,
+            message: data.message,
+          })
+        );
+        return;
+      }
+
+      setMessages((prev) => [...prev, data]);
+
       dispatch(
         setLastMessage({
-          userId: data.message.receiverId,
-          message: data.message,
+          userId: data.senderId,
+          message: data,
         })
       );
-      return;
-    }
-
-    setMessages((prev) => [...prev, data]);
-
-    dispatch(
-      setLastMessage({
-        userId: data.senderId,
-        message: data,
-      })
-    );
-  });
-
-}, [activeUser, dispatch]);
+    });
+  }, [activeUser, dispatch]);
 
 
   // 📤 SEND MESSAGE

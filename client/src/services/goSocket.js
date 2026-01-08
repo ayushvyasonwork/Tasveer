@@ -13,7 +13,6 @@ export const connectGoSocket = async (onMessage) => {
     console.log("✅ Go WebSocket connected");
   };
 
-  // 🔥 THIS WAS MISSING
   ws.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);

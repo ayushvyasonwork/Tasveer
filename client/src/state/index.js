@@ -11,8 +11,8 @@ const initialState = {
   activeChatUser: null,
 };
 
-export const authSlice = createSlice({
-  name: "auth",
+export const mainSlice = createSlice({
+  name: "main",
   initialState,
   reducers: {
     setMode: (state) => {
@@ -72,5 +72,5 @@ export const {
   setUsers,
   setActiveChatUser,
   setLastMessage,
-} = authSlice.actions;
-export default authSlice.reducer;
+} = mainSlice.actions;
+export default mainSlice.reducer;

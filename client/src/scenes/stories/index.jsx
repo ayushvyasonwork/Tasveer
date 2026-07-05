@@ -115,7 +115,7 @@ const StoriesPage = () => {
 
   const user = useSelector((state) => state.user);
   const { palette } = useTheme();
-  const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
+  const apiKey = process.env.REACT_APP_GROQ_API_KEY;
   const YT_API_KEY = process.env.REACT_APP_YOUTUBE_API_KEY || ''; // YouTube Data API key
 
 useEffect(() => {
@@ -265,32 +265,53 @@ useEffect(() => {
         Return ONLY the final JSON object with the keys "moodMatches" and "communityPicks". Do not include any other text.
     `;
     
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const apiUrl = "https://api.groq.com/openai/v1/chat/completions";
 
-    const payload = {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: 'application/json' },
-    };
+const payload = {
+  model: "llama-3.3-70b-versatile", // Change model if needed
+  messages: [
+    {
+      role: "user",
+      content: prompt,
+    },
+  ],
+  response_format: {
+    type: "json_object",
+  },
+};
 
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+const response = await fetch(apiUrl, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${apiKey}`,
+  },
+  body: JSON.stringify(payload),
+});
 
-    if (!response.ok) {
-        const errorBody = await response.text();
-        console.error("API Error Response (Song Recs):", errorBody);
-        throw new Error(`API request for song recommendations failed with status ${response.status}`);
-    }
+if (!response.ok) {
+  const errorBody = await response.text();
+  console.error("API Error Response (Song Recs):", errorBody);
+  throw new Error(
+    `API request for song recommendations failed with status ${response.status}`
+  );
+}
 
-    const result = await response.json();
-    if (result.candidates && result.candidates[0].content && result.candidates[0].content.parts[0]) {
-        return JSON.parse(result.candidates[0].content.parts[0].text);
-    } else {
-        console.error("Unexpected API response (Song Recs):", result);
-        throw new Error('Unexpected API response structure for song recommendations');
-    }
+const result = await response.json();
+
+if (
+  result.choices &&
+  result.choices[0] &&
+  result.choices[0].message &&
+  result.choices[0].message.content
+) {
+  return JSON.parse(result.choices[0].message.content);
+} else {
+  console.error("Unexpected API response (Song Recs):", result);
+  throw new Error(
+    "Unexpected API response structure for song recommendations"
+  );
+}
   };
 
   const handleSuggestMusic = async () => {
